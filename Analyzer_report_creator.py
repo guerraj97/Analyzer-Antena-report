@@ -6,6 +6,10 @@ Created on Wed May  5 11:23:11 2021
 Version 0.0.0 - Inicio del archivo.
 Version 0.1.0 - Pruebas para la generacion de un documento PDF y agregar imagenes.
 30/05/2021 Version 0.2.0 - Cambios en la GUI para pedir valores iniciales para calculos.
+06/06/2021 Version 0.3.0 - Arreglos a la GUI para el inicio de los calculos y generacion del reporte PDF
+                           Se agrega un checkbox para calcular la envolvente o no. Ademas, un textbox para
+                           colocar la ruta de los datos que se van a utilizar. Bloqueo de interfaz inicial 
+                           mediante el boton de INICIO.
 
 @author: joseguerra
 """
@@ -15,44 +19,53 @@ n = 35 #para el boton1 de capturar
 n2 = 300 #para el boton3 del codigo
 n3 = 35
 
+from Analyzer import analyzer_generator #libreria swarm para la deteccion de la pose de agentes
+
 from PySide2.QtCore import Qt
-from PySide2.QtWidgets import QLabel, QApplication, QWidget, QPushButton,QLineEdit
+from PySide2.QtWidgets import QLabel, QApplication, QWidget, QPushButton,QLineEdit, QCheckBox, QVBoxLayout
 import sys
 from PySide2.QtGui import QImage, QPixmap
+
+
+
+filename = '/Users/joseguerra/Desktop/Libro1.csv'
+
+
 
 
 class Window(QWidget):
     #global q
     #new_thread = 0
+    
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Generador de Reportes - RSI (2021)")
+        self.parametros_iniciales()
+        
         self.setGeometry(370,210,650,600)
         #self.setIcon()
         self.image_frame = QLabel()
+        self.createCheckBox()
+        
         self.capturar_button()
-        self.Reiniciar_calibracion()
-        #self.detener_procesamiento_button()
-        self.Num_ID()
-        self.ingresar_codigo()
-        self.codigo_button()
-        self.new_thread = 0
-        self.Toma_pose()
+
+        self.Calculos_EL()
         self.biniciar_calculos.setEnabled(False)
-        self.size_codigo.setEnabled(False)
         
         self.parametros_iniciales()
         
         #cajas de texto para datos conocidos
-        self.texto_degree_start.setEnabled(False)
-        self.texto_degree_stop.setEnabled(False)
+        self.texto_degree_EL.setEnabled(False)
+        self.texto_degree_AZ.setEnabled(False)
+        self.EL_PEAK.setEnabled(False)
+        self.filename_.setEnabled(False)
+        self.texto_antena_gain.setEnabled(False)
         
-        #self.detener.setEnabled(False)
-        #self.mostrar_imagen = QLabel()
+
         
         #Muestra el titulo de la imagen en la GUI
         self.label_img_text = QLabel(self)
-        self.label_img_text.move(220,220)
+        self.label_img_text.move(250,300)
         self.label_img_text.setText("Visualizar Imagen")
         self.label_img_text.setFixedWidth(125)
         self.label_img_text.show()
@@ -78,7 +91,7 @@ class Window(QWidget):
         #Para mostrar etiqueta de generar codigo/marcador/identificador
         self.label_code = QLabel(self)
         self.label_code.move(n+280,50-20)
-        self.label_code.setText("Generacion Identificador")
+        self.label_code.setText("Ruta del archivo de datos")
         self.label_code.setFixedWidth(200)
         self.label_code.show()
         
@@ -104,142 +117,67 @@ class Window(QWidget):
         self.label_note2.show()
 
     def capturar_button(self):
-        self.bcapturar = QPushButton("Calibrar", self)
+        self.bcapturar = QPushButton("INICIO", self)
         self.bcapturar.move(n,50)
         self.bcapturar.clicked.connect(self.capturar)
-    
-    def Reiniciar_calibracion(self):
-        self.bre_calib = QPushButton("Reiniciar calibracion", self)
-        self.bre_calib.move(n+90,50)
-        self.bre_calib.clicked.connect(self.Calibracion_reinit)
-    
-        
-    def codigo_button(self):
-        self.btn3 = QPushButton("Generar Codigo", self)
-        self.btn3.move(n2,50)
-        self.btn3.clicked.connect(self.codigo)
         
     
-    def Toma_pose(self):
+    def Calculos_EL(self):
         self.biniciar_calculos = QPushButton("Iniciar Calculos", self)
         self.biniciar_calculos.move(n3,120)
-        #self.Init_pose()
+
         self.biniciar_calculos.clicked.connect(self.pose)
-        
-    def detener_procesamiento_button(self):
-        self.detener = QPushButton("Detener Procesamiento", self)
-        self.detener.move(n3,150)
-        self.detener.clicked.connect(self.detener_procesamiento)
-    
-    def Calibracion_reinit(self):
-        self.bcapturar.setEnabled(True)
-        self.biniciar_calculos.setEnabled(False)
-        self.size_codigo.setEnabled(False)
         
         
     def pose(self):
-        global gray_blur_img, canny_img, snapshot_robot, resized, Final_Crop_rotated
-        text = self.size_codigo.text()
-        if text == '':
-            text = '3'
-        numCod = int(text)
-        #read_lock.acquire()
-        #start_time = time.time()
-        #foto = camara.get_frame("SINGLE")
-        #snapshot_robot,MyWiHe = vector_robot.calibrar_imagen(foto)
-        #q.put(snapshot_robot)
-        #read_lock.release()
-        self.set_label_image(snapshot_robot,"Robots a identificar")
-        #cv.imshow("CapturaPoseRobot", snapshot_robot)
+        self.file_name = self.filename_.text()
+        print(self.file_name)
+        analyzer = analyzer_generator(self.file_name)
+        EL_angle_txt = self.texto_degree_EL.text()
+        EL_angle = float(EL_angle_txt)
+
+        Antena_gain_txt = self.texto_antena_gain.text()
+        _antena_gain = float(Antena_gain_txt)        
         
-        #cv.waitKey(0)
-        #time.sleep(1)
-  
-        """   
-        if resized == [] or Final_Crop_rotated ==[]:
-            pass
-        else:
-            #gray_blur_img
-            cv.imshow("gray_blur_img",gray_blur_img)
-            cv.imshow("resized",resized)
-            cv.imshow("Final_Crop_rotated", Final_Crop_rotated)
-            cv.imshow("canny_img",canny_img)
-            cv.waitKey(0)
-        """
-        #cv.waitKey(100)
-        #cv.imshow("canny_img", canny_img)
-        #cv.waitKey(0)
-        #cv.imshow("Imagen blur", gray_blur_img)
-        #cv.waitKey(0)
+        AZ_angle_txt = self.texto_degree_AZ.text()
+        AZ_angle = float(AZ_angle_txt)
         
-        #procesar.join()
-        #obtener_pose.join()
-        #actualizar = threading.Thread(target = read_2)
+        EL_PEAK_txt = self.EL_PEAK.text()
+        _EL_PEAK = float(EL_PEAK_txt)
         
-        """
-        #Version sin hilos
-        #Snapshot = cv.imread("opencv_CalibSnapshot_0.png")
-        RecCod, gray_blur_img, canny_img = getRobot_Code(snapshot_robot, MyGlobalCannyInf, MyGlobalCannySup, numCod)
-        parameters = getRobot_fromSnapshot(RecCod,gray_blur_img,numCod)
-        
-        size = len(parameters)
-        for i in range (0, size):
-            temp_param = parameters[i]
-            if vector_robot.update_robot_byID(temp_param[0], temp_param[1], temp_param[2]):
-                pass
-            else:
-                vector = vector_robot.agregar_robot(Robot(temp_param[0],temp_param[1],temp_param[2]))
-        print("Este es el vector retornado: ",vector[0].id_robot)
-        print("Este es el vector retornado: ",vector[1].id_robot)
-        """
+        EL, fig = analyzer.data_calculation_EL(EL_angle, _antena_gain,self.envelope)
+        AZ = analyzer.data_calculation_AZ(AZ_angle, _antena_gain, _EL_PEAK,self.envelope)
+        analyzer.report_generator("AZChart.png", "ELChart.png",AZ,EL)
+        self.set_label_image(fig, "prueba")
     
-    def Num_ID(self):
-        self.lineEdit = QLineEdit(self,placeholderText="Ingrese número")
-        self.lineEdit.setFixedWidth(120)
-        self.lineEdit.move(n2+140,55)
-        #vbox = QVBoxLayout(self)
-        #vbox.addWidget(self.lineEdit)
-    
-    def ingresar_codigo(self):
-        self.size_codigo = QLineEdit(self,placeholderText="Tamaño del código")
-        self.size_codigo.setFixedWidth(125)
-        self.size_codigo.move(n3+120,303)
-        #vbox = QVBoxLayout(self)
-        #vbox.addWidget(self.lineEdit)
         
     def parametros_iniciales(self):
         
         #para agregar las cajas de los datos 
         
-        self.texto_degree_start = QLineEdit(self,placeholderText="Degree start")
-        self.texto_degree_stop = QLineEdit(self,placeholderText="Degree stop")
-
+        self.texto_degree_EL = QLineEdit(self,placeholderText="Degree EL")
+        self.texto_degree_AZ = QLineEdit(self,placeholderText="Degree AZ")
+        self.EL_PEAK = QLineEdit(self,placeholderText="EL PEAK")
+        self.texto_antena_gain = QLineEdit(self,placeholderText="Antena Gain2")
+        
+        self.filename_ = QLineEdit(self,placeholderText="FILE NAME")
+        
+        self.filename_.setFixedWidth(400)
+        self.filename_.move(n+200,50)
+        
+        self.EL_PEAK.setFixedWidth(125)
+        self.EL_PEAK.move(n3+135,183)
         
         #para ajustar la posicion en la GUI
-        self.texto_degree_start.setFixedWidth(125)
-        self.texto_degree_start.move(n3+135,123)
+        self.texto_degree_EL.setFixedWidth(125)
+        self.texto_degree_EL.move(n3+135,123)
+   
+        self.texto_degree_AZ.setFixedWidth(125)
+        self.texto_degree_AZ.move(n3+135,153)
         
-        self.texto_degree_stop.setFixedWidth(125)
-        self.texto_degree_stop.move(n3+135,153)
+        self.texto_antena_gain.setFixedWidth(125)
+        self.texto_antena_gain.move(n3+275,123)
         
-
-        
-    # def detener_procesamiento(self):
-    #     global flag_detener
-    #     flag_detener = True
-    #     self.procesar.join()
-    #     self.obtener_pose.join()
-    #     self.vector_update.join()
-    #     self.new_thread = 0
-    #     flag_detener = False
-    #     self.detener.setEnabled(False)
-        
-    def codigo(self):
-        text = self.lineEdit.text()
-        if text == '':
-            text = '0'
-        num = int(text)
-        #camara.Generar_codigo(num)
         
     def set_label_image(self, snap, text):
         self.image = snap
@@ -253,19 +191,45 @@ class Window(QWidget):
         
         
     def capturar(self):
-        #foto = camara.get_frame()
-        #CaliSnapshot = camara.Calibrar(foto,Calib_param,Treshold)
-        #self.set_label_image(CaliSnapshot, "Imagen Calibrada")
-        #self.label_img.show()
-        #self.image = QImage(self.image.data, self.image.shape[1], self.image.shape[0], QImage.Format_RGB888).rgbSwapped()
-        #self.image_frame.setPixmap(QPixmap.fromImage(self.image))
-
-        #cv.imshow("Output Image", CaliSnapshot)
-        #cv.waitKey(2000)
-        #camara.destroy_window()
         self.biniciar_calculos.setEnabled(True)
-        self.size_codigo.setEnabled(True)
-        self.bcapturar.setEnabled(False)
+        
+        self.EL_PEAK.setEnabled(True)
+        self.texto_antena_gain.setEnabled(True)
+        
+        self.texto_degree_EL.setEnabled(True)
+        self.texto_degree_AZ.setEnabled(True)
+        self.filename_.setEnabled(True)
+        
+
+    def createCheckBox(self):
+        
+        self.label = QLabel("", self)
+        self.label.move(n3+100, 208)
+        self.label.setFixedWidth(200)
+        
+        check = QCheckBox("envolvente", self)
+        check.stateChanged.connect(self.checkBoxChange)
+        check.move(n3+5,205)
+        
+        vbox = QVBoxLayout()
+
+        
+        check.toggle()
+        vbox.addWidget(check)
+        vbox.addWidget(self.label)
+        
+        #self.setLayout(vbox)
+ 
+ 
+ 
+    def checkBoxChange(self, state):
+        if state == Qt.Checked:
+            self.envelope = 1
+            self.label.setText("ACTIVADO")
+ 
+        else:
+            self.envelope = 0
+            self.label.setText("DESACTIVADO")
         
 
             
