@@ -4,14 +4,14 @@
 Created on Sun May 30 18:31:55 2021
 
 Version 0.0.0 - Inicio del archivo.
-30/05/2021 Version 0.0.1 - Creacion de las primeras clases para los calculos de los reportes.
+30/05/2021 Version 0.1.0 - Creacion de las primeras clases para los calculos de los reportes.
                            Encuentra los maximos en los datos y los minimos en la diferencia, esto 
                            # sirve para poder realizar los calculos para el ploteo.
-05/06/2021 Version 0.0.2 - Encuentra el minimo y maximo necesario para ciertos calculos. Grafica la figura 
+05/06/2021 Version 0.2.0 - Encuentra el minimo y maximo necesario para ciertos calculos. Grafica la figura 
                            con datos de elevacion y su respectiva grafica envolvente. Version preeliminar
                            de un documento PDF con una tabla que resume los datos y muestra la grafica
                            generada. 
-05/06/2021 Version 0.0.3 - Generacion completa de un archivo PDF con graficas y tablas para AZ y EL.
+05/06/2021 Version 0.3.0 - Generacion completa de un archivo PDF con graficas y tablas para AZ y EL.
 
 @author: joseguerra
 """
