@@ -4,30 +4,12 @@
 Created on Wed May  5 11:23:11 2021
 
 Version 0.0.0 - Inicio del archivo.
-Version 0.0.1 - Pruebas para la generacion de un documento PDF y agregar imagenes.
-30/05/2021 Version 0.0.2 - Cambios en la GUI para pedir valores iniciales para calculos.
+Version 0.1.0 - Pruebas para la generacion de un documento PDF y agregar imagenes.
+30/05/2021 Version 0.2.0 - Cambios en la GUI para pedir valores iniciales para calculos.
 
 @author: joseguerra
 """
 
-# from reportlab.pdfgen.canvas import Canvas
-# from reportlab.lib.units import inch, cm
-# from reportlab.lib.pagesizes import LETTER
-
-# import matplotlib.pyplot as plt
-
-# fig = plt.figure(figsize=(4, 3))
-# plt.plot([1,2,3,4])
-# plt.ylabel('some numbers')
-
-# fig.savefig("prueba")
-
-# canvas = Canvas("font-example.pdf", pagesize=LETTER)
-# canvas.setFont("Times-Roman", 18)
-# canvas.drawString(1 * inch, 10 * inch, "Times New Roman (18 pt)")
-# canvas.save()
-
-# image_on_canvas.py
 
 n = 35 #para el boton1 de capturar
 n2 = 300 #para el boton3 del codigo
@@ -37,25 +19,6 @@ from PySide2.QtCore import Qt
 from PySide2.QtWidgets import QLabel, QApplication, QWidget, QPushButton,QLineEdit
 import sys
 from PySide2.QtGui import QImage, QPixmap
-
-
-# def add_image(image_path):
-#     img = utils.ImageReader(image_path)
-#     img_width, img_height = img.getSize()
-#     aspect = img_height / float(img_width)
-
-#     my_canvas = canvas.Canvas("canvas_image.pdf",
-#                               pagesize=letter)
-#     my_canvas.saveState()
-#     #my_canvas.rotate(45)
-#     my_canvas.drawImage(image_path, 150, 10,
-#                         width=100, height=(100 * aspect))
-#     my_canvas.restoreState()
-#     my_canvas.save()
-
-# if __name__ == '__main__':
-#     image_path = 'prueba.png'
-#     add_image(image_path)
 
 
 class Window(QWidget):
@@ -316,3 +279,4 @@ window.show()
 sys.exit(myapp.exec_())
 
 myapp.quit()
+
