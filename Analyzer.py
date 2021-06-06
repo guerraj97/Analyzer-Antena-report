@@ -58,7 +58,7 @@ def figure_generator(angle_step, difference, envelope,_filename):
         plt.ylabel('some numbers')
         fig.savefig(_filename)
         
-def report_template_table(_filename,angle,max_data,min_value,step_size):
+def report_template_table(angle,max_data,min_value,step_size):
         s = getSampleStyleSheet()
         # elements = []
         
@@ -99,6 +99,7 @@ def report_template_table(_filename,angle,max_data,min_value,step_size):
         t=Table(data2)
         t.setStyle(style)
         return t
+    
 class analyzer_generator():
     
     def __init__(self,filename):
@@ -114,38 +115,65 @@ class analyzer_generator():
         self.max_data = max(self.new_data)
         #return self.maxnumber
     
-    def data_calculation(self, _type_calculation,angle):
-        if _type_calculation == "EL":
-            #definicion de variables
-            self.angle = angle #angle de barrido
-            difference = np.empty(self.max_index) #creacion del array vacio, esto solo es para
-                                                  #un mejor manejo del tipo de datos
-    
-            antena_gain = 53.697342562316 #ganancia de la antena
-            
+    def data_calculation(self, _type_calculation,angle,antena_gain, EL_PEAK):
+        
+        #definicion de variables
+        correction_angle = math.cos(EL_PEAK*(3.14159/180))
+        
+        #definicion de variables
+        self.angle = angle #angle de barrido
+        difference = np.empty(self.max_index) #creacion del array vacio, esto solo es para
+                                              #un mejor manejo del tipo de datos
+
+        #antena_gain = 53.697342562316 #ganancia de la antena
+        
+        for i in range (0,self.max_index):
+            difference[i] = (self.df.Datos[i] - self.max_data) #calcula la diferencia
+        
+        for i in range (0, len(difference)):
+            if (difference[i] == 0):
+                #print(i+1) 
+                index_value = i #encuentra el indice de donde esta el valor.
+                
+        self.step_size = self.angle/(index_value) #calcula el step para el barrido
+        angle_step = np.empty(self.max_index) #array para el calculo del barrido de los grados empezando
+                                              #en -angle-
+        angle_step[0] = self.angle #primer elemento es igual al angulo dado
+        
+        for i in range (1,self.max_index):
+            angle_step[i] = angle_step[i-1] - self.step_size #calcula el barrido
+                                       
+        self.min_value = min(difference) #encuentra el valor minimo de la diferencia
+        
+        if _type_calculation == "AZ":
+            correction_angle_new = np.empty(self.max_index) #array para el calculo del barrido de los grados empezando
+                                      #en -angle-
             for i in range (0,self.max_index):
-                difference[i] = (self.df.Datos[i] - self.max_data) #calcula la diferencia
+                correction_angle_new[i] = angle_step[i]*correction_angle
             
-            for i in range (0, len(difference)):
-                if (difference[i] == 0):
-                    #print(i+1) 
-                    index_value = i #encuentra el indice de donde esta el valor.
-                    
-            self.step_size = self.angle/(index_value) #calcula el step para el barrido
-            angle_step = np.empty(self.max_index) #array para el calculo del barrido de los grados empezando
-                                                  #en -angle-
-            angle_step[0] = self.angle #primer elemento es igual al angulo dado
+            #calculo de la envolvente
+            envelope = np.empty(self.max_index)
             
-            for i in range (1,self.max_index):
-                angle_step[i] = angle_step[i-1] - self.step_size #calcula el barrido
-                                           
-            self.min_value = min(difference) #encuentra el valor minimo de la diferencia
+            for i in range(0,self.max_index):
+                if angle_step[i] <=-1 or angle_step[i]>=1:
+                    calc = -antena_gain+(32-25*math.log10(np.abs(correction_angle_new[i])))
+                    envelope[i] = calc
+                else:
+                    envelope[i] = np.NaN
+            overshoot = 0
+    
+            for i in range(0,self.max_index):
+                if difference[i] > envelope[i]:
+                    overshoot+=1
+            figure_generator(angle_step,difference,envelope,"AZChart")
             
-            # print("este es el valor maximo", self.max_data)
-            # print("Este es el step size",self.step_size)
-            # print("esta es la diferencia minima",self.min_value)
-            
-            
+            AZ_data = report_template_table(self.angle, self.max_data, self.min_value, self.step_size)
+        
+        # print("este es el valor maximo", self.max_data)
+        # print("Este es el step size",self.step_size)
+        # print("esta es la diferencia minima",self.min_value)
+        
+        if _type_calculation == "EL":
             #calculo de la envolvente
             envelope = np.empty(self.max_index)
             
@@ -162,61 +190,12 @@ class analyzer_generator():
                 if difference[i] > envelope[i]:
                     overshoot+=1
             figure_generator(angle_step,difference,envelope,"ELChart")
-                    
-        elif _type_calculation == "AZ":
-            EL_PEAK = 30.50
-            #definicion de variables
-            correction_angle = math.cos(EL_PEAK*(3.14159/180))
-            self.angle = angle #angle de barrido
-            difference = np.empty(self.max_index) #creacion del array vacio, esto solo es para
-                                                  #un mejor manejo del tipo de datos
-    
-            antena_gain = 53.697342562316 #ganancia de la antena
             
-            for i in range (0,self.max_index):
-                difference[i] = (self.df.Datos[i] - self.max_data) #calcula la diferencia
-            
-            for i in range (0, len(difference)):
-                if (difference[i] == 0):
-                    #print(i+1) 
-                    index_value = i #encuentra el indice de donde esta el valor.
-                    
-            self.step_size = self.angle/(index_value) #calcula el step para el barrido
-            angle_step = np.empty(self.max_index) #array para el calculo del barrido de los grados empezando
-                                                  #en -angle-
-            correction_angle_new = np.empty(self.max_index) #array para el calculo del barrido de los grados empezando
-                                                  #en -angle-
-            angle_step[0] = self.angle #primer elemento es igual al angulo dado
-            
-            for i in range (1,self.max_index):
-                angle_step[i] = angle_step[i-1] - self.step_size #calcula el barrido
-                                           
-            for i in range (1,self.max_index):
-                correction_angle_new[i] = angle_step[i]*correction_angle
-            self.min_value = min(difference) #encuentra el valor minimo de la diferencia
-            print(correction_angle_new[0])
-            # print("este es el valor maximo", self.max_data)
-            # print("Este es el step size",self.step_size)
-            # print("esta es la diferencia minima",self.min_value)
-            
-            
-            #calculo de la envolvente
-            envelope = np.empty(self.max_index)
-            for i in range(0,self.max_index):
-                if angle_step[i] <=-1 or angle_step[i]>=1:
-                    calc = -antena_gain+(32-25*math.log10(np.abs(angle_step[i])))
-                    envelope[i] = calc
-                else:
-                    envelope[i] = np.NaN
-            overshoot = 0
-    
-            for i in range(0,self.max_index):
-                if difference[i] > envelope[i]:
-                    overshoot+=1
-            figure_generator(correction_angle_new,difference,envelope,"AZChart")
+            EL_data = report_template_table(self.angle, self.max_data, self.min_value, self.step_size)
+        return AZ_data, EL_data
 
         
-    def report_generator(self,_az_filename,_el_filename):
+    def report_generator(self,_az_filename,_el_filename, AZ, EL):
         doc = SimpleDocTemplate("test_report_lab.pdf", pagesize=A4, rightMargin=30,leftMargin=30, topMargin=30,bottomMargin=18)
         doc.pagesize = landscape(A4)
         s = getSampleStyleSheet()
@@ -236,7 +215,7 @@ class analyzer_generator():
         # ]
    
         paragraph_1 = Paragraph("PREELIMINAR TEMPLATE REPORT", s['Heading1'])
-        # elements.append(paragraph_1)
+        elements.append(paragraph_1)
         # elements.append(Image(_el_filename))
         
         # #TODO: Get this line right instead of just copying it from the docs
@@ -260,8 +239,10 @@ class analyzer_generator():
         # t.setStyle(style)
         
         #Send the data and build the file
-        t = report_template_table(_filename, angle, max_data, min_value, step_size)
-        elements.append(t)
+        elements.append(Image(_az_filename))
+        elements.append(AZ)
+        elements.append(Image(_el_filename))
+        elements.append(EL)
 
                 
         doc.build(elements)
@@ -270,6 +251,9 @@ class report_generator():
     def __init__(self,cam_num = 0, WIDTH = 960, HEIGHT = 720):
         pass
         
+antena_gain = 53.697342562316
+EL_PEAK = 30.50
+
 analyzer = analyzer_generator(filename)
-analyzer.data_calculation("EL", -12)
-analyzer.report_generator()
+AZ, EL = analyzer.data_calculation("EL", -12, antena_gain, EL_PEAK)
+analyzer.report_generator("AZChart.png", "ELChart.png")
