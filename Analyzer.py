@@ -103,16 +103,22 @@ def report_template_table(angle,max_data,min_value,step_size):
 class analyzer_generator():
     
     def __init__(self,filename):
-        self.df = pd.read_csv(filename, error_bad_lines=False)
+        self.df = pd.read_csv(filename, error_bad_lines=False,sep=';')
         
         self.max_index = self.df.shape[0]
-        self.max_data = self.df.max()
+        #self.max_data = self.df.max()
         
-        self.new_data = np.empty(self.max_index)
+        self.EL_data = np.empty(self.max_index)
+        self.AZ_data = np.empty(self.max_index)
+        
         for i in range (0,self.max_index):
-            self.new_data[i] = self.df.Datos[i]
+            self.EL_data[i] = self.df.EL[i]
             
-        self.max_data = max(self.new_data)
+        for i in range (0,self.max_index):
+            self.AZ_data[i] = self.df.AZ[i]
+
+            
+        self.max_data = max(self.EL_data)
         #return self.maxnumber
     
     def data_calculation(self, _type_calculation,angle,antena_gain, EL_PEAK):
@@ -128,7 +134,7 @@ class analyzer_generator():
         #antena_gain = 53.697342562316 #ganancia de la antena
         
         for i in range (0,self.max_index):
-            difference[i] = (self.df.Datos[i] - self.max_data) #calcula la diferencia
+            difference[i] = (self.df.EL[i] - self.max_data) #calcula la diferencia
         
         for i in range (0, len(difference)):
             if (difference[i] == 0):
