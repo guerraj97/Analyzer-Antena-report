@@ -12,6 +12,8 @@ Version 0.0.0 - Inicio del archivo.
                            de un documento PDF con una tabla que resume los datos y muestra la grafica
                            generada. 
 05/06/2021 Version 0.3.0 - Generacion completa de un archivo PDF con graficas y tablas para AZ y EL.
+06/06/2021 Version 0.3.1 - Mejoras menores al reporte PDF. Se arregal el calcular la envolvente mediante
+                           una variable de control para que el usuario decida si quiere o no tener este dato.
 
 @author: joseguerra
 """
@@ -21,7 +23,7 @@ Version 0.0.0 - Inicio del archivo.
 
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4, inch, landscape
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Image
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Image, PageBreak
 
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib import utils
@@ -34,10 +36,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 import math
 
-filename = '/Users/joseguerra/Desktop/Libro1.csv'
+filename = '/Users/joseguerra/Desktop/template_data2.csv'
 
 
-def figure_generator(angle_step, difference, envelope,_filename, chart_title):
+def figure_generator(angle_step, difference, envelope,_filename, chart_title,_envelope_state):
         '''
     
 
@@ -64,9 +66,14 @@ def figure_generator(angle_step, difference, envelope,_filename, chart_title):
         
         plt.title(chart_title)#agrega titulo
         
-        plt.plot(angle_step,envelope,"-r") #ploteo de la envolvente
+        if _envelope_state == 0:
+            pass
+        else:
+            plt.plot(angle_step,envelope,"-r") #ploteo de la envolvente
+            
         plt.ylabel('some numbers')#axis name
         fig.savefig(_filename) #guarda la figura para su uso posterior en el reporte PDF
+        return fig
         
 def report_template_table(angle,max_data,min_value,step_size,antena_gain):
         '''
@@ -172,7 +179,7 @@ class analyzer_generator():
             self.AZ_data[i] = self.df.AZ[i]
 
        
-    def data_calculation_AZ(self,angle,antena_gain, EL_PEAK):
+    def data_calculation_AZ(self,angle,antena_gain, EL_PEAK, _envelope):
         '''
         Funcion que calcula todo lo referente para la grafica de AZ
 
@@ -224,28 +231,32 @@ class analyzer_generator():
         for i in range (0,self.max_index):
             correction_angle_new[i] = angle_step[i]*correction_angle #calcula el nuevo angulo (correccion)
         
-        #calculo de la envolvente
-        envelope = np.empty(self.max_index)
-        
-        for i in range(0,self.max_index):
-            if angle_step[i] <=-1 or angle_step[i]>=1:
-                calc = -antena_gain+(32-25*math.log10(np.abs(correction_angle_new[i])))
-                envelope[i] = calc
-            else:
-                envelope[i] = np.NaN
-        overshoot = 0
-
-        for i in range(0,self.max_index):
-            if difference[i] > envelope[i]:
-                overshoot+=1
-        figure_generator(angle_step,difference,envelope,"AZChart","Azimuth Pattern for 9.0m Antenna # 4 C-Band")
+        if _envelope == 0:
+            figure_generator(angle_step,difference,np.NaN,"AZChart","Azimuth Pattern for 9.0m Antenna # 4 C-Band", 0)
+        else:
+            #calculo de la envolvente
+            envelope = np.empty(self.max_index)
+            
+            for i in range(0,self.max_index):
+                if angle_step[i] <=-1 or angle_step[i]>=1:
+                    calc = -antena_gain+(32-25*math.log10(np.abs(correction_angle_new[i])))
+                    envelope[i] = calc
+                else:
+                    envelope[i] = np.NaN
+                
+            overshoot = 0
+    
+            for i in range(0,self.max_index):
+                if difference[i] > envelope[i]:
+                    overshoot+=1
+            figure_generator(angle_step,difference,envelope,"AZChart","Azimuth Pattern for 9.0m Antenna # 4 C-Band", 1)
         
         AZ_data = report_template_table(angle, max_data, min_value, step_size,antena_gain)
         
 
         return AZ_data    
     
-    def data_calculation_EL(self,angle,antena_gain):
+    def data_calculation_EL(self,angle,antena_gain, _envelope):
         '''
         Funcion que calcula todo lo referente para la grafica de EL
 
@@ -286,25 +297,30 @@ class analyzer_generator():
                                        
         min_value = min(difference) #encuentra el valor minimo de la diferencia
     
-        #calculo de la envolvente
-        envelope = np.empty(self.max_index)
-        
-        for i in range(0,self.max_index):
-            if angle_step[i] <=-1 or angle_step[i]>=1:
-                calc = -antena_gain+(32-25*math.log10(np.abs(angle_step[i])))
-                envelope[i] = calc
-            else:
-                envelope[i] = np.NaN
+        if _envelope == 0:
+            el_chart = figure_generator(angle_step,difference,np.NaN,"ELChart","Elevation Pattern for 9.0m Antenna # 4 C-Band", 0)
+    
+        else:
+            #calculo de la envolvente
+            envelope = np.empty(self.max_index)
+            
+            for i in range(0,self.max_index):
+                if angle_step[i] <=-1 or angle_step[i]>=1:
+                    calc = -antena_gain+(32-25*math.log10(np.abs(angle_step[i])))
+                    envelope[i] = calc
+                else:
+                    envelope[i] = np.NaN
                 
-        overshoot = 0
-
-        for i in range(0,self.max_index):
-            if difference[i] > envelope[i]:
-                overshoot+=1
-        figure_generator(angle_step,difference,envelope,"ELChart","Elevation Pattern for 9.0m Antenna # 4 C-Band")
+            overshoot = 0
+    
+            for i in range(0,self.max_index):
+                if difference[i] > envelope[i]:
+                    overshoot+=1
+                    
+            el_chart = figure_generator(angle_step,difference,envelope,"ELChart","Elevation Pattern for 9.0m Antenna # 4 C-Band",1)
         
         EL_data = report_template_table(angle, max_data, min_value, step_size,antena_gain)
-        return EL_data
+        return EL_data, el_chart
 
         
     def report_generator(self,_az_filename,_el_filename, AZ, EL):
@@ -328,7 +344,7 @@ class analyzer_generator():
 
         '''
         doc = SimpleDocTemplate("test_report_lab.pdf", pagesize=A4, rightMargin=30,leftMargin=30, topMargin=30,bottomMargin=18)
-        doc.pagesize = landscape(A4)
+        #doc.pagesize = landscape(A4)
         s = getSampleStyleSheet()
         elements = []
         
@@ -340,6 +356,7 @@ class analyzer_generator():
         #Send the data and build the file
         elements.append(Image(_az_filename))
         elements.append(AZ)
+        elements.append(PageBreak())
         elements.append(Image(_el_filename))
         elements.append(EL)
 
@@ -347,10 +364,10 @@ class analyzer_generator():
         doc.build(elements)
 
         
-antena_gain = 53.697342562316
-EL_PEAK = 30.50
+# antena_gain = 53.697342562316
+# EL_PEAK = 30.50
 
-analyzer = analyzer_generator(filename)
-EL = analyzer.data_calculation_EL(-12, antena_gain)
-AZ = analyzer.data_calculation_AZ(-13.93, antena_gain, EL_PEAK)
-analyzer.report_generator("AZChart.png", "ELChart.png",AZ,EL)
+# analyzer = analyzer_generator(filename)
+# EL = analyzer.data_calculation_EL(-1, antena_gain)
+# AZ = analyzer.data_calculation_AZ(-1.16, antena_gain, EL_PEAK)
+# analyzer.report_generator("AZChart.png", "ELChart.png",AZ,EL)
