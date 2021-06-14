@@ -148,7 +148,7 @@ class Window(QWidget):
         EL, fig = analyzer.data_calculation_EL(EL_angle, _antena_gain,self.envelope)
         AZ = analyzer.data_calculation_AZ(AZ_angle, _antena_gain, _EL_PEAK,self.envelope)
         analyzer.report_generator("AZChart.png", "ELChart.png",AZ,EL)
-        self.set_label_image(fig, "prueba")
+        #self.set_label_image(fig, "prueba")
     
         
     def parametros_iniciales(self):
@@ -226,10 +226,12 @@ class Window(QWidget):
         if state == Qt.Checked:
             self.envelope = 1
             self.label.setText("ACTIVADO")
+            self.texto_antena_gain.setEnabled(True)
  
         else:
             self.envelope = 0
             self.label.setText("DESACTIVADO")
+            self.texto_antena_gain.setEnabled(False)
         
 
             
