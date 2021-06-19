@@ -14,6 +14,10 @@ Version 0.0.0 - Inicio del archivo.
 05/06/2021 Version 0.3.0 - Generacion completa de un archivo PDF con graficas y tablas para AZ y EL.
 06/06/2021 Version 0.3.1 - Mejoras menores al reporte PDF. Se arregal el calcular la envolvente mediante
                            una variable de control para que el usuario decida si quiere o no tener este dato.
+13/06/2021 Version 0.4.0 - Se agrega el calculo de la ganacia.
+13/06/2021 Version 0.4.1 - Mejoras a la busqueda de datos para calcular la ganancia. Se agregan nuevas variables
+                           en las funciones de AZ y EL calculation, para nombrar las figuras y los titulos a gusto
+                           del usuario. 
 
 @author: joseguerra
 """
@@ -44,7 +48,9 @@ CONST_DB_M_3 = -3
 CONST_DB_M_3_UP = -2.9
 CONST_DB_M_3_DOWN = -3.1
 
-filename = '/Users/joseguerra/Desktop/AZ_GAIN_2_DEG.csv'
+filename = '/Users/joseguerra/Desktop/GAIN_2DEG_PAD_C.csv'
+#filename = '/Users/joseguerra/Desktop/GAIN_2DEG_PAD_B.csv'
+#filename = '/Users/joseguerra/Desktop/AZ_GAIN_2_DEG.csv' #DATOS ANTERIORES PARA EL PAD B
 
 
 def figure_generator(angle_step, difference, envelope,_filename, chart_title,_envelope_state):
@@ -187,7 +193,7 @@ class analyzer_generator():
             self.AZ_data[i] = self.df.AZ[i]
 
        
-    def data_calculation_AZ(self,angle,antena_gain, EL_PEAK, _envelope):
+    def data_calculation_AZ(self,angle,antena_gain, EL_PEAK, _envelope,_chart_title_ = "AZChart",_filename_ = "AZ_Chart"):
         '''
         Funcion que calcula todo lo referente para la grafica de AZ
 
@@ -240,7 +246,7 @@ class analyzer_generator():
             self.correction_angle_AZ[i] = self.angle_step_AZ[i]*correction_angle #calcula el nuevo angulo (correccion)
         
         if _envelope == 0:
-            figure_generator(self.angle_step_AZ,self.difference_AZ,np.NaN,"AZChart","Azimuth Pattern for 9.0m Antenna # 4 C-Band", 0)
+            figure_generator(self.angle_step_AZ,self.difference_AZ,np.NaN,_filename_,_chart_title_, 0)
         else:
             #calculo de la envolvente
             envelope = np.empty(self.max_index)
@@ -257,14 +263,14 @@ class analyzer_generator():
             for i in range(0,self.max_index):
                 if self.difference_AZ[i] > envelope[i]:
                     overshoot+=1
-            figure_generator(self.angle_step_AZ,self.difference_AZ,envelope,"AZChart","Azimuth Pattern for 9.0m Antenna # 4 C-Band", 1)
+            figure_generator(self.angle_step_AZ,self.difference_AZ,envelope,_filename_,_chart_title_, 1)
         
         AZ_data = report_template_table(angle, max_data, min_value, step_size,antena_gain)
         
 
         return AZ_data    
     
-    def data_calculation_EL(self,angle,antena_gain, _envelope):
+    def data_calculation_EL(self,angle,antena_gain, _envelope,_chart_title_ = "ELChart",_filename_ = "EL_Chart"):
         '''
         Funcion que calcula todo lo referente para la grafica de EL
 
@@ -307,7 +313,7 @@ class analyzer_generator():
         min_value = min(self.difference_EL) #encuentra el valor minimo de la diferencia
     
         if _envelope == 0:
-            el_chart = figure_generator(self.angle_step_EL,self.difference_EL,np.NaN,"ELChart","Elevation Pattern for 9.0m Antenna # 4 C-Band", 0)
+            el_chart = figure_generator(self.angle_step_EL,self.difference_EL,np.NaN,_filename_,_chart_title_, 0)
     
         else:
             #calculo de la envolvente
@@ -326,7 +332,7 @@ class analyzer_generator():
                 if self.difference_EL[i] > envelope[i]:
                     overshoot+=1
                     
-            el_chart = figure_generator(self.angle_step_EL,self.difference_EL,envelope,"ELChart","Elevation Pattern for 9.0m Antenna # 4 C-Band",1)
+            el_chart = figure_generator(self.angle_step_EL,self.difference_EL,envelope,_filename_,_chart_title_,1)
         
         EL_data = report_template_table(angle, max_data, min_value, step_size,antena_gain)
         return EL_data, el_chart
@@ -394,35 +400,70 @@ class analyzer_generator():
         index_negative_3dB = 0
         index_positive_3dB = 0
         
+        diff_index_10n = 300
+        diff_index_10p = 300
+        diff_index_3n = 300
+        diff_index_3p = 300
         for i in range (0, len(self.rf_new_AZ)):
-            if index_negative_10dB == 0:
-                if abs(self.rf_new_AZ[i]-CONST_DB_M_10) <0.17:
+            
+            if abs(self.rf_new_AZ[i])%abs(CONST_DB_M_10) <1:
+                if diff_index_10n > abs(self.rf_new_AZ[i]-CONST_DB_M_10) and self.rf_new_AZ[i] < 0:
                     index_negative_10dB = i
-                    print("index_negative_10dB",index_negative_10dB)
-                    # if i > 0:
-                    #     if abs(self.rf_new_AZ[i-1]-CONST_DB_M_10) <0.06:
-                    #         index_negative_10dB = i-1
-                    #         print(index_negative_10dB)
+                    diff_index_10n = abs(self.rf_new_AZ[i]-CONST_DB_M_10)
+                # if abs(self.rf_new_EL[i]-CONST_DB_M_10)<0.17 and self.rf_new_EL[i] < 0:
+                #     index_negative_10dB = i
                     
-            if index_positive_10dB == 0:
-                if abs(self.rf_new_AZ[i]+CONST_DB_M_10) <0.08:
+            if abs(self.rf_new_AZ[i])%abs(CONST_DB_M_10) <1:
+                if diff_index_10p > abs(self.rf_new_AZ[i]+CONST_DB_M_10):
                     index_positive_10dB = i
-                    if i > 0:
-                        if abs(self.rf_new_AZ[i-1]+CONST_DB_M_10) <0.06:
-                            index_positive_10dB = i-1
-                        
-            if index_negative_3dB == 0:       
-                if abs(self.rf_new_AZ[i]-CONST_DB_M_3) <0.08:
+                    diff_index_10p = abs(self.rf_new_AZ[i]+CONST_DB_M_10)
+                # if abs(self.rf_new_EL[i]+CONST_DB_M_10)<0.17:
+                #     print("diferencia entre const y angulo",self.rf_new_EL[i]+CONST_DB_M_10)
+                #     index_positive_10dB = i
+                    
+            if abs(self.rf_new_AZ[i])%abs(CONST_DB_M_3) <1:
+                if diff_index_3n > abs(self.rf_new_AZ[i]-CONST_DB_M_3) and self.rf_new_AZ[i] < 0:
                     index_negative_3dB = i
-                    if i > 0:
-                        if abs(self.rf_new_AZ[i-1]-CONST_DB_M_3) <0.06:
-                            index_negative_3dB = i-1
-            if index_positive_3dB == 0:      
-                if abs(self.rf_new_AZ[i]+CONST_DB_M_3) <0.08:
+                    diff_index_3n = abs(self.rf_new_AZ[i]-CONST_DB_M_3)
+                # if abs(self.rf_new_EL[i]-CONST_DB_M_3)<0.17 and self.rf_new_EL[i] < 0:
+                #     index_negative_3dB = i
+                    
+            if abs(self.rf_new_AZ[i])%abs(CONST_DB_M_3) <1:
+                if diff_index_3p > abs(self.rf_new_AZ[i]+CONST_DB_M_3):
                     index_positive_3dB = i
-                    if i>0:
-                        if abs(self.rf_new_AZ[i-1]+CONST_DB_M_3) <0.06:
-                            index_positive_3dB = i-1
+                    diff_index_3p = abs(self.rf_new_AZ[i]+CONST_DB_M_3)
+                # if abs(self.rf_new_EL[i]+CONST_DB_M_3)<0.17:
+                #     index_positive_3dB = i
+        
+        # for i in range (0, len(self.rf_new_AZ)):
+        #     if index_negative_10dB == 0:
+        #         if abs(self.rf_new_AZ[i]-CONST_DB_M_10) <0.17:
+        #             index_negative_10dB = i
+        #             print("index_negative_10dB",index_negative_10dB)
+        #             # if i > 0:
+        #             #     if abs(self.rf_new_AZ[i-1]-CONST_DB_M_10) <0.06:
+        #             #         index_negative_10dB = i-1
+        #             #         print(index_negative_10dB)
+                    
+        #     if index_positive_10dB == 0:
+        #         if abs(self.rf_new_AZ[i]+CONST_DB_M_10) <0.08:
+        #             index_positive_10dB = i
+        #             if i > 0:
+        #                 if abs(self.rf_new_AZ[i-1]+CONST_DB_M_10) <0.06:
+        #                     index_positive_10dB = i-1
+                        
+        #     if index_negative_3dB == 0:       
+        #         if abs(self.rf_new_AZ[i]-CONST_DB_M_3) <0.08:
+        #             index_negative_3dB = i
+        #             if i > 0:
+        #                 if abs(self.rf_new_AZ[i-1]-CONST_DB_M_3) <0.06:
+        #                     index_negative_3dB = i-1
+        #     if index_positive_3dB == 0:      
+        #         if abs(self.rf_new_AZ[i]+CONST_DB_M_3) <0.08:
+        #             index_positive_3dB = i
+        #             if i>0:
+        #                 if abs(self.rf_new_AZ[i-1]+CONST_DB_M_3) <0.06:
+        #                     index_positive_3dB = i-1
                         
         for u in range (0,4):
             if u == 0:
@@ -614,7 +655,16 @@ class analyzer_generator():
         print("index_positive_3dB 3",index_positive_3dB) 
         print("index_positive_10dB 10",index_positive_10dB)   
                 
-                
+        #para EL
+        index_negative_10dB = 0
+        index_positive_10dB = 0
+        index_negative_3dB = 0
+        index_positive_3dB = 0
+        
+        diff_index_10n = 300
+        diff_index_10p = 300
+        diff_index_3n = 300
+        diff_index_3p = 300
         #calculos iniciales para elevacion       
         self.rf_new_EL = np.empty(self.max_index)
         for i in range (0,len(self.angle_step_EL)):
@@ -625,31 +675,40 @@ class analyzer_generator():
                 self.rf_new_EL[i] = self.difference_EL[i]
               
         #para EL
-        
+        diff_index_10n = 300
+        diff_index_10p = 300
+        diff_index_3n = 300
+        diff_index_3p = 300
         for i in range (0, len(self.rf_new_EL)):
-            if abs(self.rf_new_EL[i]-CONST_DB_M_10) <0.08:
-                index_negative_10dB = i
-                if i > 0:
-                    if abs(self.rf_new_EL[i-1]-CONST_DB_M_10) <0.04:
-                        index_negative_10dB = i-1
+            
+            if abs(self.rf_new_EL[i])%abs(CONST_DB_M_10) <1:
+                if diff_index_10n > abs(self.rf_new_EL[i]-CONST_DB_M_10) and self.rf_new_EL[i] < 0:
+                    index_negative_10dB = i
+                    diff_index_10n = abs(self.rf_new_EL[i]-CONST_DB_M_10)
+                # if abs(self.rf_new_EL[i]-CONST_DB_M_10)<0.17 and self.rf_new_EL[i] < 0:
+                #     index_negative_10dB = i
                     
-            if abs(self.rf_new_EL[i]+CONST_DB_M_10) <0.08:
-                index_positive_10dB = i
-                if i > 0:
-                    if abs(self.rf_new_EL[i-1]+CONST_DB_M_10) <0.06:
-                        index_positive_10dB = i-1
+            if abs(self.rf_new_EL[i])%abs(CONST_DB_M_10) <1:
+                if diff_index_10p > abs(self.rf_new_EL[i]+CONST_DB_M_10):
+                    index_positive_10dB = i
+                    diff_index_10p = abs(self.rf_new_EL[i]+CONST_DB_M_10)
+                # if abs(self.rf_new_EL[i]+CONST_DB_M_10)<0.17:
+                #     print("diferencia entre const y angulo",self.rf_new_EL[i]+CONST_DB_M_10)
+                #     index_positive_10dB = i
                     
-            if abs(self.rf_new_EL[i]-CONST_DB_M_3) <0.08:
-                index_negative_3dB = i
-                if i > 0:
-                    if abs(self.rf_new_EL[i-1]-CONST_DB_M_3) <0.05:
-                        index_negative_3dB = i-1
+            if abs(self.rf_new_EL[i])%abs(CONST_DB_M_3) <1:
+                if diff_index_3n > abs(self.rf_new_EL[i]-CONST_DB_M_3) and self.rf_new_EL[i] < 0:
+                    index_negative_3dB = i
+                    diff_index_3n = abs(self.rf_new_EL[i]-CONST_DB_M_3)
+                # if abs(self.rf_new_EL[i]-CONST_DB_M_3)<0.17 and self.rf_new_EL[i] < 0:
+                #     index_negative_3dB = i
                     
-            if abs(self.rf_new_EL[i]+CONST_DB_M_3) <0.08:
-                index_positive_3dB = i
-                if i>0:
-                    if abs(self.rf_new_EL[i-1]+CONST_DB_M_3) <0.06:
-                        index_positive_3dB = i-1
+            if abs(self.rf_new_EL[i])%abs(CONST_DB_M_3) <1:
+                if diff_index_3p > abs(self.rf_new_EL[i]+CONST_DB_M_3):
+                    index_positive_3dB = i
+                    diff_index_3p = abs(self.rf_new_EL[i]+CONST_DB_M_3)
+                # if abs(self.rf_new_EL[i]+CONST_DB_M_3)<0.17:
+                #     index_positive_3dB = i
                         
         for u in range (0,4):
             if u == 0:
@@ -871,11 +930,18 @@ class analyzer_generator():
         
 # antena_gain = 53.697342562316
 # EL_PEAK = 30.50
+_chart_title_ = "Azimuth Pattern for 9.0m Antenna # 4 C-Band"
+_chart_title2_ = "Elevation Pattern for 9.0m Antenna # 4 C-Band"
+_filename_ = "AZ_ENV_Chart_PadC.png"
+_filename2_ = "EL_EN_Chart_PadC.png"
 
+antena_gain = 53.6973
 analyzer = analyzer_generator(filename)
-analyzer.data_calculation_AZ(-1.16,0,30.5,0)
-analyzer.data_calculation_EL(-1,0,0)
+analyzer.data_calculation_AZ(-1.16,0,30.5,0,_chart_title_,_filename_)
+analyzer.data_calculation_EL(-1,0,0,_chart_title_,_filename2_)
 analyzer.gain_calculation()
-# EL = analyzer.data_calculation_EL(-1, antena_gain)
-# AZ = analyzer.data_calculation_AZ(-1.16, antena_gain, EL_PEAK)
-# analyzer.report_generator("AZChart.png", "ELChart.png",AZ,EL)
+
+
+EL = analyzer.data_calculation_EL(-12, antena_gain, 1, _chart_title_, _filename_)
+AZ = analyzer.data_calculation_AZ(-13.15,antena_gain,30.5,1,_chart_title2_,_filename2_)
+# analyzer.report_generator(_filename_, _filename2_,AZ,EL)
