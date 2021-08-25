@@ -18,6 +18,8 @@ Version 0.0.0 - Inicio del archivo.
 13/06/2021 Version 0.4.1 - Mejoras a la busqueda de datos para calcular la ganancia. Se agregan nuevas variables
                            en las funciones de AZ y EL calculation, para nombrar las figuras y los titulos a gusto
                            del usuario. 
+13/06/2021 Version 0.4.2 - Arreglos menores al codigo. Codigo de debugin comentado. 
+                           Pendiente: Mejorar PDF.
 
 @author: joseguerra
 """
@@ -39,6 +41,11 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import math
+
+from datetime import datetime, timedelta
+  
+  
+
 
 CONST_DB_M_10 = -10
 CONST_DB_M_10_UP = -9.9
@@ -87,6 +94,7 @@ def figure_generator(angle_step, difference, envelope,_filename, chart_title,_en
             
         plt.ylabel('some numbers')#axis name
         fig.savefig(_filename) #guarda la figura para su uso posterior en el reporte PDF
+        print("save figure")
         return fig
         
 def report_template_table(angle,max_data,min_value,step_size,antena_gain):
@@ -213,7 +221,7 @@ class analyzer_generator():
 
         '''
         max_data = max(self.AZ_data) #Busca el maximo
-        
+        print(self.AZ_data)
         #definicion de variables
         self.difference_AZ = np.empty(self.max_index) #creacion del array vacio, esto solo es para
                                               #un mejor manejo del tipo de datos
@@ -223,7 +231,7 @@ class analyzer_generator():
         
         
         for i in range (0,self.max_index):
-            self.difference_AZ[i] = (self.df.AZ[i] - max_data) #calcula la diferencia
+            self.difference_AZ[i] = (self.AZ_data[i] - max_data) #calcula la diferencia
         
         for i in range (0, len(self.difference_AZ)):
             if (self.difference_AZ[i] == 0):
@@ -335,7 +343,7 @@ class analyzer_generator():
             el_chart = figure_generator(self.angle_step_EL,self.difference_EL,envelope,_filename_,_chart_title_,1)
         
         EL_data = report_template_table(angle, max_data, min_value, step_size,antena_gain)
-        return EL_data, el_chart
+        return EL_data
 
         
     def report_generator(self,_az_filename,_el_filename, AZ, EL):
@@ -930,18 +938,27 @@ class analyzer_generator():
         
 # antena_gain = 53.697342562316
 # EL_PEAK = 30.50
-_chart_title_ = "Azimuth Pattern for 9.0m Antenna # 4 C-Band"
-_chart_title2_ = "Elevation Pattern for 9.0m Antenna # 4 C-Band"
-_filename_ = "AZ_ENV_Chart_PadC.png"
-_filename2_ = "EL_EN_Chart_PadC.png"
+# Using current time
+# ini_time_for_now = datetime.now()
+# _chart_title_ = "Azimuth Pattern for 9.0m Antenna # 4 C-Band"
+# _chart_title2_ = "Elevation Pattern for 9.0m Antenna # 4 C-Band"
+# _filename_ = "AZ_ENV_Chart_PadC.png"
+# _filename2_ = "EL_EN_Chart_PadC.png"
 
-antena_gain = 53.6973
-analyzer = analyzer_generator(filename)
-analyzer.data_calculation_AZ(-1.16,0,30.5,0,_chart_title_,_filename_)
-analyzer.data_calculation_EL(-1,0,0,_chart_title_,_filename2_)
-analyzer.gain_calculation()
+# antena_gain = 53.6973
+#analyzer = analyzer_generator(filename)
+# analyzer.data_calculation_AZ(-1.16,0,30.5,0,_chart_title_,_filename_)
+# analyzer.data_calculation_EL(-1,0,0,_chart_title_,_filename2_)
+# analyzer.gain_calculation()
+#analyzer.data_calculation_AZ(angle, antena_gain, EL_PEAK, _envelope,_chart_title_ = "AZChart",_filename_ = "AZ_Chart")
+#analyzer.data_calculation_EL(angle, antena_gain, _envelope,_chart_title_ = "ELChart",_filename_ = "EL_Chart")
+#analyzer.gain_calculation()
+# EL = analyzer.data_calculation_EL(-12, antena_gain, 1, _chart_title_, _filename_)
+# AZ = analyzer.data_calculation_AZ(-13.15,antena_gain,30.5,1,_chart_title2_,_filename2_)
 
+# # Using current time
+# end_time_for_now = datetime.now()
 
-EL = analyzer.data_calculation_EL(-12, antena_gain, 1, _chart_title_, _filename_)
-AZ = analyzer.data_calculation_AZ(-13.15,antena_gain,30.5,1,_chart_title2_,_filename2_)
+# delta = end_time_for_now - ini_time_for_now 
+#print(delta)
 # analyzer.report_generator(_filename_, _filename2_,AZ,EL)
