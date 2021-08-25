@@ -10,6 +10,9 @@ Version 0.1.0 - Pruebas para la generacion de un documento PDF y agregar imagene
                            Se agrega un checkbox para calcular la envolvente o no. Ademas, un textbox para
                            colocar la ruta de los datos que se van a utilizar. Bloqueo de interfaz inicial 
                            mediante el boton de INICIO.
+24/08/2021 Version 0.3.1 - Se agregan identificadores a la GUI para nombrar archivos y figuras. Solamente 
+                           se agregan los textboxes, aun no esta implementado para su funcionamiento.
+                           Pendiente: que estas variables y textos sirvan para identificar archivos.
 
 @author: joseguerra
 """
@@ -61,12 +64,16 @@ class Window(QWidget):
         self.filename_.setEnabled(False)
         self.texto_antena_gain.setEnabled(False)
         
+        self.diametro_antena.setEnabled(False)
+        self.pad_id.setEnabled(False)
+        self.banda_.setEnabled(False)
+        
 
         
         #Muestra el titulo de la imagen en la GUI
         self.label_img_text = QLabel(self)
-        self.label_img_text.move(250,300)
-        self.label_img_text.setText("Visualizar Imagen")
+        self.label_img_text.move(80,250)
+        self.label_img_text.setText("IDENTIFICADORES")
         self.label_img_text.setFixedWidth(125)
         self.label_img_text.show()
         
@@ -116,6 +123,7 @@ class Window(QWidget):
         self.label_note2.setFixedWidth(600)
         self.label_note2.show()
 
+
     def capturar_button(self):
         self.bcapturar = QPushButton("INICIO", self)
         self.bcapturar.move(n,50)
@@ -132,11 +140,14 @@ class Window(QWidget):
     def pose(self):
         self.file_name = self.filename_.text()
         print(self.file_name)
+        
         analyzer = analyzer_generator(self.file_name)
         EL_angle_txt = self.texto_degree_EL.text()
         EL_angle = float(EL_angle_txt)
 
         Antena_gain_txt = self.texto_antena_gain.text()
+        if self.envelope == 0:
+            Antena_gain_txt = 0
         _antena_gain = float(Antena_gain_txt)        
         
         AZ_angle_txt = self.texto_degree_AZ.text()
@@ -145,9 +156,23 @@ class Window(QWidget):
         EL_PEAK_txt = self.EL_PEAK.text()
         _EL_PEAK = float(EL_PEAK_txt)
         
-        EL, fig = analyzer.data_calculation_EL(EL_angle, _antena_gain,self.envelope)
-        AZ = analyzer.data_calculation_AZ(AZ_angle, _antena_gain, _EL_PEAK,self.envelope)
-        analyzer.report_generator("AZChart.png", "ELChart.png",AZ,EL)
+        AZ = analyzer.data_calculation_AZ(AZ_angle, _antena_gain, _EL_PEAK, self.envelope,_chart_title_ = "AZChart",_filename_ = "AZ_Chart")
+        EL = analyzer.data_calculation_EL(EL_angle, _antena_gain, self.envelope,_chart_title_ = "ELChart",_filename_ = "EL_Chart")
+        analyzer.gain_calculation()
+        
+        analyzer.report_generator("AZ_Chart.png", "EL_Chart.png",AZ,EL)
+        
+        # analyzer.data_calculation_AZ(-1.16,0,30.5,0,_chart_title_,_filename_)
+        # analyzer.data_calculation_EL(-1,0,0,_chart_title_,_filename2_)
+        # analyzer.gain_calculation()
+        
+        
+        # EL = analyzer.data_calculation_EL(-12, antena_gain, 1, _chart_title_, _filename_)
+        # AZ = analyzer.data_calculation_AZ(-13.15,antena_gain,30.5,1,_chart_title2_,_filename2_)
+        
+        # EL, fig = analyzer.data_calculation_EL(EL_angle, _antena_gain,self.envelope)
+        # AZ = analyzer.data_calculation_AZ(AZ_angle, _antena_gain, _EL_PEAK,self.envelope)
+        # analyzer.report_generator("AZChart.png", "ELChart.png",AZ,EL)
         #self.set_label_image(fig, "prueba")
     
         
@@ -159,6 +184,10 @@ class Window(QWidget):
         self.texto_degree_AZ = QLineEdit(self,placeholderText="Degree AZ")
         self.EL_PEAK = QLineEdit(self,placeholderText="EL PEAK")
         self.texto_antena_gain = QLineEdit(self,placeholderText="Antena Gain2")
+        
+        self.diametro_antena = QLineEdit(self,placeholderText="DIAMETRO ANTENA")
+        self.pad_id = QLineEdit(self,placeholderText="PAD-ID")
+        self.banda_ = QLineEdit(self,placeholderText="BAND")
         
         self.filename_ = QLineEdit(self,placeholderText="FILE NAME")
         
@@ -177,6 +206,15 @@ class Window(QWidget):
         
         self.texto_antena_gain.setFixedWidth(125)
         self.texto_antena_gain.move(n3+275,123)
+        
+        #PARA IDENTIFICACION DE LOS ARCHIVOS 
+        #self.diametro_antena.setEnabled(False)
+        self.diametro_antena.move(n3+60, 270)
+        self.diametro_antena.setFixedWidth(155)
+        #self.pad_id.setEnabled(False)
+        self.pad_id.move(n3+60, 300)
+        #self.banda_.setEnabled(False)
+        self.banda_.move(n3+60, 335)
         
         
     def set_label_image(self, snap, text):
@@ -199,6 +237,10 @@ class Window(QWidget):
         self.texto_degree_EL.setEnabled(True)
         self.texto_degree_AZ.setEnabled(True)
         self.filename_.setEnabled(True)
+        
+        self.diametro_antena.setEnabled(True)
+        self.pad_id.setEnabled(True)
+        self.banda_.setEnabled(True)
         
 
     def createCheckBox(self):
@@ -232,6 +274,7 @@ class Window(QWidget):
             self.envelope = 0
             self.label.setText("DESACTIVADO")
             self.texto_antena_gain.setEnabled(False)
+        
         
 
             
