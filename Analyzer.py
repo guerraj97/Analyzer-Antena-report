@@ -18,8 +18,12 @@ Version 0.0.0 - Inicio del archivo.
 13/06/2021 Version 0.4.1 - Mejoras a la busqueda de datos para calcular la ganancia. Se agregan nuevas variables
                            en las funciones de AZ y EL calculation, para nombrar las figuras y los titulos a gusto
                            del usuario. 
-13/06/2021 Version 0.4.2 - Arreglos menores al codigo. Codigo de debugin comentado. 
+24/08/2021 Version 0.4.2 - Arreglos menores al codigo. Codigo de debugin comentado. 
                            Pendiente: Mejorar PDF.
+                           
+27/08/2021 Version 0.5.0 - Arreglos para la generacion de la tabla de datos. Ahora si se calcula la envolvente
+                           se muestra una tabla diferente al calculo de la ganancia. Se agregan variables de control
+                           para verificar la envolvente y otro tipo de identificadores segun lo necesitado.                           
 
 @author: joseguerra
 """
@@ -55,7 +59,7 @@ CONST_DB_M_3 = -3
 CONST_DB_M_3_UP = -2.9
 CONST_DB_M_3_DOWN = -3.1
 
-filename = '/Users/joseguerra/Desktop/GAIN_2DEG_PAD_C.csv'
+filename = '/Users/joseguerra/Desktop/GAIN_2DEG_PAD_B.csv'
 #filename = '/Users/joseguerra/Desktop/GAIN_2DEG_PAD_B.csv'
 #filename = '/Users/joseguerra/Desktop/AZ_GAIN_2_DEG.csv' #DATOS ANTERIORES PARA EL PAD B
 
@@ -97,45 +101,71 @@ def figure_generator(angle_step, difference, envelope,_filename, chart_title,_en
         print("save figure")
         return fig
         
-def report_template_table(angle,max_data,min_value,step_size,antena_gain):
+def report_template_table(angle,max_data,min_value,step_size,antena_gain,EL_PEAK,AZ_pos,overshoot,envelope):
         '''
-        
     
-        Parameters
-        ----------
-        angle : TYPE Float
+
+    Parameters
+    ----------
+    angle : TYPE Float
             Angulo de inicio para el barrido
-        max_data : TYPE Float
+    max_data : TYPE Float
             Maximo encontrado
-        min_value : TYPE Float
+    min_value : TYPE Float
             Minimo encontrado
-        step_size : TYPE Float
-            Step calculado para el barrido
-        antena_gain : TYPE Float
+    step_size : TYPE Float
+            Step calculado para el barrido.
+    antena_gain : TYPE Float
             Ganancia de la antena
-    
-        Returns
-        -------
+    EL_PEAK : TYPE Float
+            Posicion inicial de la antena o pico en elevacion
+    AZ_pos : TYPE Float
+            Posicion inicial en la antena o pico en Azimuth
+    overshoot : TYPE Int
+            Cantidad de valores que estan por arriba del envelope (solo mostrado si se pide la grafica de envolvente)
+    envelope : TYPE Int
+            1 o 0, para mostrar la tabla de envelope o solamente los datos para gain
+
+    Returns
+    -------
         t : TYPE tableStyle
             Contiene una estructura de datos con toda la informacion para la generacion de la tabla 
             en el documento PDF
-    
-        '''
+
+    '''
         s = getSampleStyleSheet()
 
+        if envelope == 0:
         
-        data = [
-
-        ["Parameter", "Value"],
-        ["Azimuth", "01"],
-        ["Elevation", "01"],
-        ["Antenna Gain (REAL)",str(antena_gain)],
-        ["Start of Pattern", str(angle)],
-        ["Stop of Pattern", str(-angle)],
-        ["MAX", str(max_data)],
-        ["MIN", str(min_value)],
-        ["Step Size", str(step_size)],
-        ]
+            data = [
+    
+            ["Parameter", "Value"],
+            ["Azimuth", str(AZ_pos)+" Deg PEAK"],
+            ["Elevation", str(EL_PEAK)+" Deg PEAK"],
+            ["Antenna Gain (REAL)",str(antena_gain)+" dBi"],
+            ["Start of Pattern", str(angle)+"° Deg"],
+            ["Stop of Pattern", str(-angle)+"° Deg"],
+            ["MAX", str(round(max_data,2))+" dBm"],
+            ["MIN", str(round(min_value,2))+" dBm"],
+            ["Step Size", str(round(step_size,4))+"° Deg"],
+            ]
+            
+        else:
+            data = [
+    
+            ["Parameter", "Value"],
+            ["Azimuth", str(AZ_pos)+" Deg PEAK"],
+            ["Elevation", str(EL_PEAK)+" Deg PEAK"],
+            ["Antenna Gain (REAL)",str(antena_gain)+" dBi"],
+            ["Start of Pattern", str(angle)+"° Deg"],
+            ["Stop of Pattern", str(-angle)+"° Deg"],
+            ["MAX", str(round(max_data,2))+" dBm"],
+            ["MIN", str(round(min_value,2))+" dBm"],
+            ["Step Size", str(round(step_size,4))+"° Deg"],
+            ["Overshoot", str(overshoot)],
+            ["Overshoot ratio", str(round(overshoot/1001*100,4))+"%"],
+            ]
+            
    
         #paragraph_1 = Paragraph("PREELIMINAR TEMPLATE REPORT", s['Heading1'])
         # elements.append(paragraph_1)
@@ -201,7 +231,7 @@ class analyzer_generator():
             self.AZ_data[i] = self.df.AZ[i]
 
        
-    def data_calculation_AZ(self,angle,antena_gain, EL_PEAK, _envelope,_chart_title_ = "AZChart",_filename_ = "AZ_Chart"):
+    def data_calculation_AZ(self,angle,antena_gain, _envelope,EL_PEAK,AZ_pos,_chart_title_ = "AZChart",_filename_ = "AZ_Chart"):
         '''
         Funcion que calcula todo lo referente para la grafica de AZ
 
@@ -211,8 +241,16 @@ class analyzer_generator():
             Angulo de inicio para el barrido
         antena_gain : TYPE Float
             Ganancia de la antea
+        _envelope : TYPE Int
+            1 o 0, para determinar si se calcula o no la envolvente en la grafica y se muestre la figura correcta
         EL_PEAK : TYPE FLoat
-            Elevation PEAK
+            Elevation PEAK, posicion en EL
+        AZ_pos : TYPE Float
+            Posicion en AZ
+        _chart_title_ : TYPE String, optional
+            DESCRIPTION. The default is "AZChart". Para nombrar el grafico de AZ
+        _filename_ : TYPE String, optional
+            DESCRIPTION. The default is "AZ_Chart". Para nombrar el archivo de la imagen de AZ
 
         Returns
         -------
@@ -255,6 +293,7 @@ class analyzer_generator():
         
         if _envelope == 0:
             figure_generator(self.angle_step_AZ,self.difference_AZ,np.NaN,_filename_,_chart_title_, 0)
+            overshoot = 0
         else:
             #calculo de la envolvente
             envelope = np.empty(self.max_index)
@@ -273,12 +312,12 @@ class analyzer_generator():
                     overshoot+=1
             figure_generator(self.angle_step_AZ,self.difference_AZ,envelope,_filename_,_chart_title_, 1)
         
-        AZ_data = report_template_table(angle, max_data, min_value, step_size,antena_gain)
+        AZ_data = report_template_table(angle, max_data, min_value, step_size,antena_gain,EL_PEAK,AZ_pos,overshoot,_envelope)
         
 
         return AZ_data    
     
-    def data_calculation_EL(self,angle,antena_gain, _envelope,_chart_title_ = "ELChart",_filename_ = "EL_Chart"):
+    def data_calculation_EL(self,angle,antena_gain, _envelope,EL_PEAK,AZ_pos,_chart_title_ = "ELChart",_filename_ = "EL_Chart"):
         '''
         Funcion que calcula todo lo referente para la grafica de EL
 
@@ -288,6 +327,16 @@ class analyzer_generator():
             Angulo de inicio para el barrido
         antena_gain : TYPE Float
             Ganancia de la antea
+        _envelope : TYPE Int
+            1 o 0, para determinar si se calcula o no la envolvente en la grafica y se muestre la figura correcta
+        EL_PEAK : TYPE FLoat
+            Elevation PEAK, posicion en EL
+        AZ_pos : TYPE Float
+            Posicion en AZ
+        _chart_title_ : TYPE String, optional
+            DESCRIPTION. The default is "ElChart". Para nombrar el grafico de EL
+        _filename_ : TYPE String, optional
+            DESCRIPTION. The default is "EL_Chart". Para nombrar el archivo de la imagen de EL
 
         Returns
         -------
@@ -295,6 +344,7 @@ class analyzer_generator():
             Estructura de datos que contiene la informacion para generar la tabla en el PDF
 
         '''
+
         max_data = max(self.EL_data)
         self.difference_EL = np.empty(self.max_index) #creacion del array vacio, esto solo es para
                                               #un mejor manejo del tipo de datos
@@ -322,14 +372,14 @@ class analyzer_generator():
     
         if _envelope == 0:
             el_chart = figure_generator(self.angle_step_EL,self.difference_EL,np.NaN,_filename_,_chart_title_, 0)
-    
+            overshoot = 0
         else:
             #calculo de la envolvente
             envelope = np.empty(self.max_index)
             
             for i in range(0,self.max_index):
                 if self.angle_step_EL[i] <=-1 or self.angle_step_EL[i]>=1:
-                    calc = -antena_gain+(32-25*math.log10(np.abs(self.angle_step_EL[i])))
+                    calc = (32-25*math.log10(np.abs(self.angle_step_EL[i])))-antena_gain
                     envelope[i] = calc
                 else:
                     envelope[i] = np.NaN
@@ -342,31 +392,38 @@ class analyzer_generator():
                     
             el_chart = figure_generator(self.angle_step_EL,self.difference_EL,envelope,_filename_,_chart_title_,1)
         
-        EL_data = report_template_table(angle, max_data, min_value, step_size,antena_gain)
+        EL_data = report_template_table(angle, max_data, min_value, step_size,antena_gain,EL_PEAK,AZ_pos,overshoot,_envelope)
         return EL_data
 
         
-    def report_generator(self,_az_filename,_el_filename, AZ, EL):
+    def report_generator(self,_az_filename,_el_filename, AZ, EL, CALCULATED_GAIN,PDF_NAME,envelope):
         '''
-        
+        Funcion que genera el archivo PDF utilizando la tabla de AZ y EL asi como las respectivas
+        figuras generadas.
 
         Parameters
         ----------
-        _az_filename : TYPE
-            DESCRIPTION.
-        _el_filename : TYPE
-            DESCRIPTION.
-        AZ : TYPE
-            DESCRIPTION.
-        EL : TYPE
-            DESCRIPTION.
+        _az_filename : TYPE String
+            DESCRIPTION. El nombre de la figura generada para AZ, puede ser de ganancia o envolvente
+        _el_filename : TYPE String
+            DESCRIPTION. El nombre de la figura generada para EL, puede ser de ganancia o envolvente
+        AZ : TYPE tableStyle
+            DESCRIPTION. Tabla con la informacion referente a los calculos de AZ
+        EL : TYPE tableStyle
+            DESCRIPTION. Tabla con la informacion referente a los calculos de EL
+        CALCULATED_GAIN : TYPE Float
+            DESCRIPTION. Ganancia calculada (si envelope = 0)
+        PDF_NAME : TYPE String
+            DESCRIPTION. Nombre del archivo PDF a generar
+        envelope : TYPE Int
+            DESCRIPTION. 1 o 0, para generar las tablas y textos correctos segun sea de ganancia o envolvente
 
         Returns
         -------
         None.
 
         '''
-        doc = SimpleDocTemplate("test_report_lab.pdf", pagesize=A4, rightMargin=30,leftMargin=30, topMargin=30,bottomMargin=18)
+        doc = SimpleDocTemplate(PDF_NAME, pagesize=A4, rightMargin=30,leftMargin=30, topMargin=30,bottomMargin=18)
         #doc.pagesize = landscape(A4)
         s = getSampleStyleSheet()
         elements = []
@@ -382,11 +439,24 @@ class analyzer_generator():
         elements.append(PageBreak())
         elements.append(Image(_el_filename))
         elements.append(EL)
+        if envelope == 0:
+            text = "CALCULATED GAIN: " + str(round(CALCULATED_GAIN,2))
+            para = Paragraph(text, s["Heading3"])
+            elements.append(para)
 
                 
         doc.build(elements)
     
     def gain_calculation(self):
+        '''
+        Calcula la ganancia de la Antena
+
+        Returns
+        -------
+        CALCULATED_GAIN : TYPE Float
+            DESCRIPTION. Ganancia calculada
+
+        '''
         db_10 = -10
         db_3 = -3
         #self.angle_step_EL
@@ -651,17 +721,17 @@ class analyzer_generator():
                    
                elif diff_10p > diff_10p_DOWN and diff_10p_DOWN < diff_10p_UP:
                    AZ_10_UP = round(_10p_step_DOWN,3)    
-                   
-        print("PARA AZIMUTH")
-        print("Elevation 10dB DOWN",AZ_10_DOWN)   
-        print("Elevation 10dB UP",AZ_10_UP)     
-        print("Elevation 3dB UP",AZ_3_UP)
-        print("Elevation 3dB Down", AZ_3_DOWN)
-        print()
-        print("index_negative_10dB -10",index_negative_10dB) 
-        print("index_negative_3dB -3",index_negative_3dB) 
-        print("index_positive_3dB 3",index_positive_3dB) 
-        print("index_positive_10dB 10",index_positive_10dB)   
+   ##---------------- PARA DEBUGING ------------------ ##                
+        # print("PARA AZIMUTH")
+        # print("Elevation 10dB DOWN",AZ_10_DOWN)   
+        # print("Elevation 10dB UP",AZ_10_UP)     
+        # print("Elevation 3dB UP",AZ_3_UP)
+        # print("Elevation 3dB Down", AZ_3_DOWN)
+        # print()
+        # print("index_negative_10dB -10",index_negative_10dB) 
+        # print("index_negative_3dB -3",index_negative_3dB) 
+        # print("index_positive_3dB 3",index_positive_3dB) 
+        # print("index_positive_10dB 10",index_positive_10dB)   
                 
         #para EL
         index_negative_10dB = 0
@@ -890,17 +960,17 @@ class analyzer_generator():
                    EL_10_UP = round(_10p_step_DOWN,3)
             
        
-        
-        print("PARA ELEVACION")
-        print("Elevation 10dB DOWN",EL_10_DOWN)   
-        print("Elevation 10dB UP",EL_10_UP)     
-        print("Elevation 3dB UP",EL_3_UP)
-        print("Elevation 3dB Down", EL_3_DOWN)
-        print()
-        print("index_negative_10dB -10",index_negative_10dB) 
-        print("index_negative_3dB -3",index_negative_3dB) 
-        print("index_positive_3dB 3",index_positive_3dB) 
-        print("index_positive_10dB 10",index_positive_10dB)    
+        ##---------- PARA DEBUGING ------------------ ##
+        # print("PARA ELEVACION")
+        # print("Elevation 10dB DOWN",EL_10_DOWN)   
+        # print("Elevation 10dB UP",EL_10_UP)     
+        # print("Elevation 3dB UP",EL_3_UP)
+        # print("Elevation 3dB Down", EL_3_DOWN)
+        # print()
+        # print("index_negative_10dB -10",index_negative_10dB) 
+        # print("index_negative_3dB -3",index_negative_3dB) 
+        # print("index_positive_3dB 3",index_positive_3dB) 
+        # print("index_positive_10dB 10",index_positive_10dB)    
 
         _3dB_AZ = round(-AZ_3_DOWN + AZ_3_UP,3)
         _3dB_EL = round(-EL_3_DOWN + EL_3_UP,3)
@@ -922,6 +992,7 @@ class analyzer_generator():
         
         CALCULATED_GAIN = GAIN - FEED_LOSS - RMS_LOSS
         print("GANANCIA CALCULADA",CALCULATED_GAIN)
+        return CALCULATED_GAIN
         
         #CONST_DB_M_10 = -10 #esta
         #CONST_DB_M_10_UP = -9.9
