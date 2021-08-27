@@ -97,14 +97,14 @@ class Window(QWidget):
         #Para mostrar etiqueta de calibracion
         self.label_calib = QLabel(self)
         self.label_calib.move(n+60,50-20)
-        self.label_calib.setText("Calibracion*")
+        self.label_calib.setText("INICIAR")
         self.label_calib.setFixedWidth(125)
         self.label_calib.show()
         
         #Para mostrar etiqueta de generar codigo/marcador/identificador
         self.label_code = QLabel(self)
         self.label_code.move(n+280,50-20)
-        self.label_code.setText("Ruta del archivo de datos")
+        self.label_code.setText("Ruta del archivo de datos*")
         self.label_code.setFixedWidth(200)
         self.label_code.show()
         
@@ -118,14 +118,14 @@ class Window(QWidget):
         #Para mostrar etiqueta de notas
         self.label_note1 = QLabel(self)
         self.label_note1.move(n3-5,540)
-        self.label_note1.setText("NOTA 1(*): Calibrar hasta ver las 4 esquinas del tablero (Presionar Reiniciar Calibracion)")
-        self.label_note1.setFixedWidth(600)
+        self.label_note1.setText("NOTA 1(*): Pegar la ruta completa en caso que los archivos no esten en el mismo folder del programa")
+        self.label_note1.setFixedWidth(620)
         self.label_note1.show()
         
         #Para mostrar etiqueta de notas
         self.label_note2 = QLabel(self)
         self.label_note2.move(n3-5,560)
-        self.label_note2.setText("NOTA 2(**): Mejores resultados se obtienen con ilumacion directa sobre la mesa")
+        self.label_note2.setText("NOTA 2(**): Colocar los datos iniciales (angulos de inicio del patron, AZ y El, Gain)")
         self.label_note2.setFixedWidth(600)
         self.label_note2.show()
 
