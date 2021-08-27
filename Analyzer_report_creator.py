@@ -13,6 +13,9 @@ Version 0.1.0 - Pruebas para la generacion de un documento PDF y agregar imagene
 24/08/2021 Version 0.3.1 - Se agregan identificadores a la GUI para nombrar archivos y figuras. Solamente 
                            se agregan los textboxes, aun no esta implementado para su funcionamiento.
                            Pendiente: que estas variables y textos sirvan para identificar archivos.
+27/08/2021 Version 0.4.0 - Se agregan los identificadores para nombrar archivos y el documento PDF generado en la GUI
+                           Ajustes menores a las posiciones de los textboxes y ajustes menores a la GUI
+                           Ademas de agregar mejores identificadores a los nombres de los archivos utlizando los textboxes
 
 @author: joseguerra
 """
@@ -68,6 +71,9 @@ class Window(QWidget):
         self.pad_id.setEnabled(False)
         self.banda_.setEnabled(False)
         
+        self.PDF_name.setEnabled(False)
+        self.texto_AZ_position.setEnabled(False)
+        
 
         
         #Muestra el titulo de la imagen en la GUI
@@ -77,14 +83,14 @@ class Window(QWidget):
         self.label_img_text.setFixedWidth(125)
         self.label_img_text.show()
         
-        #Para mostrar la imagen en la GUI
-        self.label_img = QLabel(self)
-        #self.label_img.setText()
-        self.label_img.setGeometry(320, 220,450, 300)
-        self.label_img.move(70,220)
-        self.label_img.show()
-        #self.mostrar_imagen.addWidget(self.image_frame)
-        #self.setLayout(self.mostrar_imagen)
+        # #Para mostrar la imagen en la GUI
+        # self.label_img = QLabel(self)
+        # #self.label_img.setText()
+        # self.label_img.setGeometry(320, 220,450, 300)
+        # self.label_img.move(70,220)
+        # self.label_img.show()
+        # #self.mostrar_imagen.addWidget(self.image_frame)
+        # #self.setLayout(self.mostrar_imagen)
         
         #Etiquetas para ordenar la GUI
         
@@ -123,6 +129,40 @@ class Window(QWidget):
         self.label_note2.setFixedWidth(600)
         self.label_note2.show()
 
+        #Muestra el titulo de la imagen en la GUI
+        self.meter_recomendation = QLabel(self)
+        self.meter_recomendation.move(n3+170, 270)
+        self.meter_recomendation.setText("COLOCAR UN NUMERO (7,9,13...)")
+        self.meter_recomendation.setFixedWidth(225)
+        self.meter_recomendation.show()
+        
+        #Muestra el titulo de la imagen en la GUI
+        self.pad_recomendation = QLabel(self)
+        self.pad_recomendation.move(n3+150, 300)
+        self.pad_recomendation.setText("IDENTIFICADOR DEL PAD: PAD C, PAD # 4...")
+        self.pad_recomendation.setFixedWidth(300)
+        self.pad_recomendation.show()
+
+        #Muestra el titulo de la imagen en la GUI
+        self.band_recomendation = QLabel(self)
+        self.band_recomendation.move(n3+150, 335)
+        self.band_recomendation.setText("BANDA: C, K, Ku")
+        self.band_recomendation.setFixedWidth(225)
+        self.band_recomendation.show()
+        
+        #Muestra el titulo de la imagen en la GUI
+        self.pdf_recomendation = QLabel(self)
+        self.pdf_recomendation.move(n3+150, 370)
+        self.pdf_recomendation.setText("nombre del pdf: reporte ganancia...")
+        self.pdf_recomendation.setFixedWidth(225)
+        self.pdf_recomendation.show()
+
+                #PARA IDENTIFICACION DE LOS ARCHIVOS 
+        # self.diametro_antena.move(n3+5, 270)
+        # self.diametro_antena.setFixedWidth(155)
+        # self.pad_id.move(n3+5, 300)
+        # self.banda_.move(n3+5, 335)
+        # self.PDF_name.move(n3+5, 370)
 
     def capturar_button(self):
         self.bcapturar = QPushButton("INICIO", self)
@@ -146,8 +186,8 @@ class Window(QWidget):
         EL_angle = float(EL_angle_txt)
 
         Antena_gain_txt = self.texto_antena_gain.text()
-        if self.envelope == 0:
-            Antena_gain_txt = 0
+        # if self.envelope == 0:
+        #     Antena_gain_txt = 0
         _antena_gain = float(Antena_gain_txt)        
         
         AZ_angle_txt = self.texto_degree_AZ.text()
@@ -156,11 +196,39 @@ class Window(QWidget):
         EL_PEAK_txt = self.EL_PEAK.text()
         _EL_PEAK = float(EL_PEAK_txt)
         
-        AZ = analyzer.data_calculation_AZ(AZ_angle, _antena_gain, _EL_PEAK, self.envelope,_chart_title_ = "AZChart",_filename_ = "AZ_Chart")
-        EL = analyzer.data_calculation_EL(EL_angle, _antena_gain, self.envelope,_chart_title_ = "ELChart",_filename_ = "EL_Chart")
-        analyzer.gain_calculation()
+        antena_diameter = self.diametro_antena.text()
+        PAD_ID = self.pad_id.text()
+        band_id = self.banda_.text()
         
-        analyzer.report_generator("AZ_Chart.png", "EL_Chart.png",AZ,EL)
+        PDF_name = self.PDF_name.text()
+        
+        Az_position = self.texto_AZ_position.text()
+        
+        PDF=PDF_name+".pdf"
+        
+        AZ_chart_title = "Azimuth Pattern for " + antena_diameter + "m Antenna " + PAD_ID +" "+ band_id + "-band"
+        print(AZ_chart_title)
+        
+        EL_chart_title = "Elevation Pattern for " + antena_diameter + "m Antenna " + PAD_ID +" "+ band_id + "-band"
+        
+        filename_EL_gain = "EL_Chart_GAIN " + antena_diameter + "m Antenna " + PAD_ID 
+        filename_AZ_gain = "AZ_Chart_GAIN " + antena_diameter + "m Antenna " + PAD_ID 
+        
+        filename_EL_env = "AZ_Chart_envelope " + antena_diameter + "m Antenna " + PAD_ID 
+        filename_AZ_env = "EL_Chart_envelope " + antena_diameter + "m Antenna " + PAD_ID 
+        
+        if self.envelope == 0:
+            AZ = analyzer.data_calculation_AZ(AZ_angle, _antena_gain, self.envelope,_EL_PEAK,Az_position,AZ_chart_title,filename_AZ_gain)
+            EL = analyzer.data_calculation_EL(EL_angle, _antena_gain, self.envelope,_EL_PEAK,Az_position,EL_chart_title,filename_EL_gain)
+            CALCULATED_GAIN = analyzer.gain_calculation()
+            analyzer.report_generator(filename_AZ_gain+".png", filename_EL_gain+".png",AZ,EL,CALCULATED_GAIN,PDF,self.envelope)
+        else:
+            AZ = analyzer.data_calculation_AZ(AZ_angle, _antena_gain, self.envelope,_EL_PEAK,Az_position,AZ_chart_title,_filename_ = filename_AZ_env)
+            EL = analyzer.data_calculation_EL(EL_angle, _antena_gain, self.envelope,_EL_PEAK,Az_position,EL_chart_title,_filename_ = filename_EL_env)
+            CALCULATED_GAIN = 0 #analyzer.gain_calculation()   
+            analyzer.report_generator(filename_AZ_env+".png", filename_EL_env+".png",AZ,EL,CALCULATED_GAIN,PDF,self.envelope)
+        
+        #analyzer.report_generator("AZ_Chart.png", "EL_Chart.png",AZ,EL)
         
         # analyzer.data_calculation_AZ(-1.16,0,30.5,0,_chart_title_,_filename_)
         # analyzer.data_calculation_EL(-1,0,0,_chart_title_,_filename2_)
@@ -180,14 +248,18 @@ class Window(QWidget):
         
         #para agregar las cajas de los datos 
         
-        self.texto_degree_EL = QLineEdit(self,placeholderText="Degree EL")
-        self.texto_degree_AZ = QLineEdit(self,placeholderText="Degree AZ")
-        self.EL_PEAK = QLineEdit(self,placeholderText="EL PEAK")
-        self.texto_antena_gain = QLineEdit(self,placeholderText="Antena Gain2")
+        self.texto_degree_EL = QLineEdit(self,placeholderText="START EL")
+        self.texto_degree_AZ = QLineEdit(self,placeholderText="START AZ")
+        self.EL_PEAK = QLineEdit(self,placeholderText="EL PEAK POSITION")
+        self.texto_antena_gain = QLineEdit(self,placeholderText="Antena Gain REAL")
+        
+        self.texto_AZ_position = QLineEdit(self,placeholderText="AZ POSITION")
         
         self.diametro_antena = QLineEdit(self,placeholderText="DIAMETRO ANTENA")
         self.pad_id = QLineEdit(self,placeholderText="PAD-ID")
         self.banda_ = QLineEdit(self,placeholderText="BAND")
+        
+        self.PDF_name = QLineEdit(self,placeholderText="PDF NAME")
         
         self.filename_ = QLineEdit(self,placeholderText="FILE NAME")
         
@@ -207,29 +279,35 @@ class Window(QWidget):
         self.texto_antena_gain.setFixedWidth(125)
         self.texto_antena_gain.move(n3+275,123)
         
+        self.texto_AZ_position.setFixedWidth(125)
+        self.texto_AZ_position.move(n3+275,153)
+        
         #PARA IDENTIFICACION DE LOS ARCHIVOS 
-        #self.diametro_antena.setEnabled(False)
-        self.diametro_antena.move(n3+60, 270)
+        self.diametro_antena.move(n3+5, 270)
         self.diametro_antena.setFixedWidth(155)
-        #self.pad_id.setEnabled(False)
-        self.pad_id.move(n3+60, 300)
-        #self.banda_.setEnabled(False)
-        self.banda_.move(n3+60, 335)
+        self.pad_id.move(n3+5, 300)
+        self.banda_.move(n3+5, 335)
+        self.PDF_name.move(n3+5, 370)
         
         
-    def set_label_image(self, snap, text):
-        self.image = snap
-        height, width, channels = self.image.shape
-        bytesPerLine = channels * width
-        self.image_show = QImage(self.image.data, width, height,bytesPerLine, QImage.Format_RGB888)
-        self.image = QPixmap.fromImage(self.image_show)
-        self.pixmap_resized = self.image.scaled(self.label_img.width(), self.label_img.height(), Qt.KeepAspectRatio)
-        self.label_img.setPixmap(self.pixmap_resized)
-        self.label_img_text.setText(text)
+    # def set_label_image(self, snap, text):
+    #     self.image = snap
+    #     height, width, channels = self.image.shape
+    #     bytesPerLine = channels * width
+    #     self.image_show = QImage(self.image.data, width, height,bytesPerLine, QImage.Format_RGB888)
+    #     self.image = QPixmap.fromImage(self.image_show)
+    #     self.pixmap_resized = self.image.scaled(self.label_img.width(), self.label_img.height(), Qt.KeepAspectRatio)
+    #     self.label_img.setPixmap(self.pixmap_resized)
+    #     self.label_img_text.setText(text)
         
         
     def capturar(self):
+        self.bcapturar.setEnabled(False)
         self.biniciar_calculos.setEnabled(True)
+        
+        self.diametro_antena.setEnabled(True)
+        self.pad_id.setEnabled(True)
+        self.banda_.setEnabled(True)
         
         self.EL_PEAK.setEnabled(True)
         self.texto_antena_gain.setEnabled(True)
@@ -237,10 +315,14 @@ class Window(QWidget):
         self.texto_degree_EL.setEnabled(True)
         self.texto_degree_AZ.setEnabled(True)
         self.filename_.setEnabled(True)
-        
         self.diametro_antena.setEnabled(True)
         self.pad_id.setEnabled(True)
-        self.banda_.setEnabled(True)
+        self.banda_.setEnabled(True) 
+        self.texto_AZ_position.setEnabled(True)
+        
+        self.PDF_name.setEnabled(True) 
+        
+
         
 
     def createCheckBox(self):
@@ -268,12 +350,12 @@ class Window(QWidget):
         if state == Qt.Checked:
             self.envelope = 1
             self.label.setText("ACTIVADO")
-            self.texto_antena_gain.setEnabled(True)
+            #self.texto_antena_gain.setEnabled(True)
  
         else:
             self.envelope = 0
             self.label.setText("DESACTIVADO")
-            self.texto_antena_gain.setEnabled(False)
+            #self.texto_antena_gain.setEnabled(False)
         
         
 
