@@ -23,7 +23,11 @@ Version 0.0.0 - Inicio del archivo.
                            
 27/08/2021 Version 0.5.0 - Arreglos para la generacion de la tabla de datos. Ahora si se calcula la envolvente
                            se muestra una tabla diferente al calculo de la ganancia. Se agregan variables de control
-                           para verificar la envolvente y otro tipo de identificadores segun lo necesitado.                           
+                           para verificar la envolvente y otro tipo de identificadores segun lo necesitado.  
+
+18/09/2021 Version 0.5.1 - Arreglos a la tabla de datos para una mejor visualizacion. 
+
+29/11/2021 Version 0.5.2 - Arreglos al codigo para mostrar si paso la ganancia.  
 
 @author: joseguerra
 """
@@ -35,7 +39,7 @@ from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4, inch, landscape
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Image, PageBreak
 
-from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib.styles import getSampleStyleSheet,ParagraphStyle
 from reportlab.lib import utils
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
@@ -96,7 +100,7 @@ def figure_generator(angle_step, difference, envelope,_filename, chart_title,_en
         else:
             plt.plot(angle_step,envelope,"-r") #ploteo de la envolvente
             
-        plt.ylabel('some numbers')#axis name
+        #plt.ylabel('some numbers')#axis name
         fig.savefig(_filename) #guarda la figura para su uso posterior en el reporte PDF
         print("save figure")
         return fig
@@ -172,23 +176,18 @@ def report_template_table(angle,max_data,min_value,step_size,antena_gain,EL_PEAK
         # elements.append(Image(_filename))
         
         #TODO: Get this line right instead of just copying it from the docs
-        style = TableStyle([('ALIGN',(1,1),(-2,-2),'RIGHT'),
-                               ('TEXTCOLOR',(1,1),(-2,-2),colors.red),
+        style = TableStyle([('ALIGN',(0,0),(1,0),'CENTER'),
                                ('VALIGN',(0,0),(0,-1),'TOP'),
-                               ('TEXTCOLOR',(0,0),(0,-1),colors.blue),
-                               ('ALIGN',(0,-1),(-1,-1),'CENTER'),
+                               ('TEXTCOLOR',(0,0),(0,10),colors.blue),
                                ('VALIGN',(0,-1),(-1,-1),'MIDDLE'),
-                               ('TEXTCOLOR',(0,-1),(-1,-1),colors.green),
+                               ('TEXTCOLOR',(0,0),(1,0),colors.green),
                                ('INNERGRID', (0,0), (-1,-1), 0.25, colors.black),
                                ('BOX', (0,0), (-1,-1), 0.25, colors.black),
                                ])
         
         #Configure style and word wrap
         
-        s = s["BodyText"]
-        s.wordWrap = 'CJK'
-        data2 = [[Paragraph(cell, s) for cell in row] for row in data]
-        t=Table(data2)
+        t=Table(data)
         t.setStyle(style)
         return t
     
@@ -209,6 +208,7 @@ class analyzer_generator():
         None.
 
         '''
+        self.antena_gain_real = 0
         self.df = pd.read_csv(filename, error_bad_lines=False)
         #El archivo debe guardarse como un CSV (ver fomato adjunto en la informacion de este proyecto)
         #El separador es un ';' ya que, por como se guardan los datos, Python reconoce esto como el separador
@@ -391,7 +391,7 @@ class analyzer_generator():
                     overshoot+=1
                     
             el_chart = figure_generator(self.angle_step_EL,self.difference_EL,envelope,_filename_,_chart_title_,1)
-        
+        self.antena_gain_real = antena_gain
         EL_data = report_template_table(angle, max_data, min_value, step_size,antena_gain,EL_PEAK,AZ_pos,overshoot,_envelope)
         return EL_data
 
@@ -424,12 +424,15 @@ class analyzer_generator():
 
         '''
         doc = SimpleDocTemplate(PDF_NAME, pagesize=A4, rightMargin=30,leftMargin=30, topMargin=30,bottomMargin=18)
+        #c = canvas.Canvas(PDF_NAME)
+        #c.drawString(30, 720, "Hello World!")
         #doc.pagesize = landscape(A4)
         s = getSampleStyleSheet()
         elements = []
+        p = ParagraphStyle('yourtitle',alignment = 1,parent=s['Heading1'])
         
    
-        paragraph_1 = Paragraph("PREELIMINAR TEMPLATE REPORT", s['Heading1'])
+        paragraph_1 = Paragraph("PREELIMINAR TEMPLATE REPORT", p)
         elements.append(paragraph_1)
 
         
@@ -443,10 +446,21 @@ class analyzer_generator():
             text = "CALCULATED GAIN: " + str(round(CALCULATED_GAIN,2))
             para = Paragraph(text, s["Heading3"])
             elements.append(para)
+            if self.antena_gain_real < CALCULATED_GAIN or CALCULATED_GAIN == self.antena_gain_real:
+                text_2 = "GAIN PASS "
+                para2 = Paragraph(text_2, s["Heading3"])
+                elements.append(para2)
+            
+        #footer_content = Paragraph("This is a footer. It goes on every page.  ", s['Normal'])
+        #canvas.saveState()
+        #w, h = footer_content.wrap(doc.width, doc.bottomMargin)
+        #elements.append(footer_content)
+        #canvas.restoreState()
 
                 
         doc.build(elements)
-    
+        #c.save()
+        
     def gain_calculation(self):
         '''
         Calcula la ganancia de la Antena
