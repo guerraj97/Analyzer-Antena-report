@@ -43,7 +43,7 @@ from reportlab.lib.styles import getSampleStyleSheet,ParagraphStyle
 from reportlab.lib import utils
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
-
+from PIL import Image
 
 import pandas as pd
 import numpy as np
@@ -266,7 +266,7 @@ class analyzer_generator():
         
         #definicion de variables
         correction_angle = math.cos(EL_PEAK*(3.14159/180)) #correccion al angulo de AZ
-        
+        correct_angle_AZ = round((angle/correction_angle),2)
         
         for i in range (0,self.max_index):
             self.difference_AZ[i] = (self.AZ_data[i] - max_data) #calcula la diferencia
@@ -275,10 +275,10 @@ class analyzer_generator():
             if (self.difference_AZ[i] == 0):
                 index_value = i #encuentra el indice de donde esta el valor.
                 
-        step_size = angle/(index_value) #calcula el step para el barrido
+        step_size = correct_angle_AZ/(index_value-1) #calcula el step para el barrido
         self.angle_step_AZ = np.empty(self.max_index) #array para el calculo del barrido de los grados empezando
                                               #en -angle-
-        self.angle_step_AZ[0] = angle #primer elemento es igual al angulo dado
+        self.angle_step_AZ[0] = correct_angle_AZ #primer elemento es igual al angulo dado
         
         for i in range (1,self.max_index):
             self.angle_step_AZ[i] = self.angle_step_AZ[i-1] - step_size #calcula el barrido
@@ -312,7 +312,7 @@ class analyzer_generator():
                     overshoot+=1
             figure_generator(self.angle_step_AZ,self.difference_AZ,envelope,_filename_,_chart_title_, 1)
         
-        AZ_data = report_template_table(angle, max_data, min_value, step_size,antena_gain,EL_PEAK,AZ_pos,overshoot,_envelope)
+        AZ_data = report_template_table(correct_angle_AZ, max_data, min_value, step_size,antena_gain,EL_PEAK,AZ_pos,overshoot,_envelope)
         
 
         return AZ_data    
@@ -563,20 +563,20 @@ class analyzer_generator():
                down_10n = index_negative_10dB - 1
                
                _10n_angle = self.rf_new_AZ[index_negative_10dB]
-               print(_10n_angle)
+               #print(_10n_angle)
                _10n_angle_UP = self.rf_new_AZ[up_10n]
-               print(_10n_angle_UP)
+               #print(_10n_angle_UP)
                _10n_angle_DOWN = self.rf_new_AZ[down_10n]
-               print("imprimiendo la correccion")
-               print(self.correction_angle_AZ)
+               # print("imprimiendo la correccion")
+               # print(self.correction_angle_AZ)
                _10n_step = self.correction_angle_AZ[index_negative_10dB]
                _10n_step_UP = self.correction_angle_AZ[up_10n]
                _10n_step_DOWN = self.correction_angle_AZ[down_10n]
-               print("imprimiendo los step")
-               print(_10n_step)
-               print(_10n_step_UP)
-               print(_10n_step_DOWN)
-               print("----------------------")
+               # print("imprimiendo los step")
+               # print(_10n_step)
+               # print(_10n_step_UP)
+               # print(_10n_step_DOWN)
+               # print("----------------------")
                #buscando el angulo para negativ
                
                
@@ -595,11 +595,11 @@ class analyzer_generator():
                else:
                    diff_10n_DOWN = -(_10n_angle_DOWN - db_10)
                    
-               print("Imprimiendo las diferencias de 10")
-               print(diff_10n)
-               print(diff_10n_UP)
-               print(diff_10n_DOWN)
-               print("----------------------")
+               # print("Imprimiendo las diferencias de 10")
+               # print(diff_10n)
+               # print(diff_10n_UP)
+               # print(diff_10n_DOWN)
+               # print("----------------------")
                #buscando el angulo para negativo    
                if diff_10n < diff_10n_UP and diff_10n < diff_10n_DOWN:
                    AZ_10_DOWN = round(_10n_step,3)
@@ -808,12 +808,12 @@ class analyzer_generator():
                down_10n = index_negative_10dB - 1
                
                _10n_angle = self.rf_new_EL[index_negative_10dB]
-               print(_10n_angle)
+               #print(_10n_angle)
                _10n_angle_UP = self.rf_new_EL[up_10n]
                _10n_angle_DOWN = self.rf_new_EL[down_10n]
                
                _10n_step = self.angle_step_EL[index_negative_10dB]
-               print(_10n_step)
+               #print(_10n_step)
                _10n_step_UP = self.angle_step_EL[up_10n]
                _10n_step_DOWN = self.angle_step_EL[down_10n]
                
@@ -991,8 +991,8 @@ class analyzer_generator():
         
         _10dB_AZ = round(-AZ_10_DOWN + AZ_10_UP,3)
         _10dB_EL = round(-EL_10_DOWN + EL_10_UP,3)
-        print(_3dB_AZ)
-        print(_3dB_EL)
+        # print(_3dB_AZ)
+        # print(_3dB_EL)
         ganancia_3db = 10*math.log10(31000/(_3dB_EL * _3dB_AZ))
         ganancia_10db = 10*math.log10(91000/(_10dB_EL * _10dB_AZ))
         print(ganancia_3db)
