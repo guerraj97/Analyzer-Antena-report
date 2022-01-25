@@ -221,12 +221,12 @@ class Window(QWidget):
             AZ = analyzer.data_calculation_AZ(AZ_angle, _antena_gain, self.envelope,_EL_PEAK,Az_position,AZ_chart_title,filename_AZ_gain)
             EL = analyzer.data_calculation_EL(EL_angle, _antena_gain, self.envelope,_EL_PEAK,Az_position,EL_chart_title,filename_EL_gain)
             CALCULATED_GAIN = analyzer.gain_calculation()
-            analyzer.report_generator(filename_AZ_gain+".png", filename_EL_gain+".png",AZ,EL,CALCULATED_GAIN,PDF,self.envelope)
+            analyzer.report_generator(filename_AZ_gain+".png", filename_EL_gain+".png",AZ,EL,CALCULATED_GAIN,PDF,self.envelope,antena_diameter,PAD_ID,band_id)
         else:
             AZ = analyzer.data_calculation_AZ(AZ_angle, _antena_gain, self.envelope,_EL_PEAK,Az_position,AZ_chart_title,_filename_ = filename_AZ_env)
             EL = analyzer.data_calculation_EL(EL_angle, _antena_gain, self.envelope,_EL_PEAK,Az_position,EL_chart_title,_filename_ = filename_EL_env)
             CALCULATED_GAIN = 0 #analyzer.gain_calculation()   
-            analyzer.report_generator(filename_AZ_env+".png", filename_EL_env+".png",AZ,EL,CALCULATED_GAIN,PDF,self.envelope)
+            analyzer.report_generator(filename_AZ_env+".png", filename_EL_env+".png",AZ,EL,CALCULATED_GAIN,PDF,self.envelope,antena_diameter,PAD_ID,band_id)
         
         #analyzer.report_generator("AZ_Chart.png", "EL_Chart.png",AZ,EL)
         
