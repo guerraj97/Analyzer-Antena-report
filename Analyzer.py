@@ -43,7 +43,7 @@ from reportlab.lib.styles import getSampleStyleSheet,ParagraphStyle
 from reportlab.lib import utils
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
-from PIL import Image
+#from PIL import Image
 
 import pandas as pd
 import numpy as np
@@ -62,6 +62,8 @@ CONST_DB_M_10_DOWN = -10.1
 CONST_DB_M_3 = -3
 CONST_DB_M_3_UP = -2.9
 CONST_DB_M_3_DOWN = -3.1
+HEIGHT_TITLE = 680
+IMAGE_HEIGTH = HEIGHT_TITLE-120
 
 filename = '/Users/joseguerra/Desktop/GAIN_2DEG_PAD_B.csv'
 #filename = '/Users/joseguerra/Desktop/GAIN_2DEG_PAD_B.csv'
@@ -275,10 +277,10 @@ class analyzer_generator():
             if (self.difference_AZ[i] == 0):
                 index_value = i #encuentra el indice de donde esta el valor.
                 
-        step_size = correct_angle_AZ/(index_value-1) #calcula el step para el barrido
+        step_size = angle/(index_value-1) #calcula el step para el barrido
         self.angle_step_AZ = np.empty(self.max_index) #array para el calculo del barrido de los grados empezando
                                               #en -angle-
-        self.angle_step_AZ[0] = correct_angle_AZ #primer elemento es igual al angulo dado
+        self.angle_step_AZ[0] = angle #primer elemento es igual al angulo dado
         
         for i in range (1,self.max_index):
             self.angle_step_AZ[i] = self.angle_step_AZ[i-1] - step_size #calcula el barrido
@@ -312,7 +314,7 @@ class analyzer_generator():
                     overshoot+=1
             figure_generator(self.angle_step_AZ,self.difference_AZ,envelope,_filename_,_chart_title_, 1)
         
-        AZ_data = report_template_table(correct_angle_AZ, max_data, min_value, step_size,antena_gain,EL_PEAK,AZ_pos,overshoot,_envelope)
+        AZ_data = report_template_table(round(correct_angle_AZ,2), max_data, min_value, step_size,antena_gain,EL_PEAK,AZ_pos,overshoot,_envelope)
         
 
         return AZ_data    
@@ -396,7 +398,7 @@ class analyzer_generator():
         return EL_data
 
         
-    def report_generator(self,_az_filename,_el_filename, AZ, EL, CALCULATED_GAIN,PDF_NAME,envelope):
+    def report_generator(self,_az_filename,_el_filename, AZ, EL, CALCULATED_GAIN,PDF_NAME,envelope,antena_diameter,PAD_ID,band_id):
         '''
         Funcion que genera el archivo PDF utilizando la tabla de AZ y EL asi como las respectivas
         figuras generadas.
@@ -424,9 +426,127 @@ class analyzer_generator():
 
         '''
         doc = SimpleDocTemplate(PDF_NAME, pagesize=A4, rightMargin=30,leftMargin=30, topMargin=30,bottomMargin=18)
-        #c = canvas.Canvas(PDF_NAME)
-        #c.drawString(30, 720, "Hello World!")
-        #doc.pagesize = landscape(A4)
+
+# GENERANDO EL CANVAS PARA "DIBUJAR" EL PDF
+        c = canvas.Canvas(PDF_NAME)
+        c.saveState()
+        c.setFont("Helvetica", 14)
+        styles = getSampleStyleSheet()
+# FINALIZA EL START-UP DE LA CONFIGURACION DEL ARCHIVO PDF
+
+# DIBUJANDO EL TITULO
+        PAGE_WIDTH  = doc.width
+        PAGE_HEIGHT = doc.height
+        
+        if envelope == 0:
+            title_pdf_ = "Gain Report " + antena_diameter + "m Antenna " + PAD_ID +" "+ band_id + "-band"
+        else:
+            title_pdf_ = "Envelope " + antena_diameter + "m Antenna " + PAD_ID +" "+ band_id + "-band"
+        
+        p = Paragraph(title_pdf_,styles['Heading1'])
+        w, h = p.wrap(doc.width, doc.bottomMargin)
+        p.drawOn(c, doc.width/2-140, HEIGHT_TITLE)
+#FINALIZA EL DIBUJO DEL TITULO
+
+#DIBUJA EL LOGO DE CPI 
+#header
+        header = Image('cpilogo.jpg')
+        header.drawHeight = 70
+        header.drawWidth = 100
+        header.hAlign = 'RIGHT'
+        w , h = header.wrap(doc.width , doc.topMargin)
+        header.drawOn(c , doc.leftMargin , 710)
+#FINALIZA EL DIBUJO DE CPI    
+   
+#INICIA LOGO RSI
+#header
+        header = Image('rsilogo.png')
+        header.drawHeight = 50
+        header.drawWidth = 175
+        header.hAlign = 'LEFT'
+        w , h = header.wrap(doc.width , doc.topMargin)
+        header.drawOn(c , doc._rightMargin-175 , 720)
+#FINALIZA LOGO RSI
+
+# Footer
+        footer = Paragraph('FECHA Y HORA', styles['Normal'])
+        w, h = footer.wrap(doc.width, doc.bottomMargin)
+        footer.drawOn(c, doc.leftMargin, h)   
+
+
+#DIBUJA LA GRAFICA AZ
+#graph
+        graph = Image(_az_filename)
+        graph.drawHeight = 275
+        graph.drawWidth = 395
+        graph.hAlign = 'CENTER'
+        #w , h = graph.wrap(doc.width , doc.topMargin)
+        graph.drawOn(c , PAGE_WIDTH/2-140 ,PAGE_HEIGHT/2-10)
+#FINALIZA DIBUJO DE GRAFICA
+
+#DIBUJA LA TABLA 
+        AZ.wrapOn(c, doc.width , doc.topMargin)
+        AZ.drawOn(c, PAGE_WIDTH/2-70, PAGE_HEIGHT/2-200)
+#FINALIZA DIBUJO 
+
+        c.showPage()
+        
+ #------- ELEVATION ------------------       
+#DIBUJA EL LOGO DE CPI 
+#header
+        header = Image('cpilogo.jpg')
+        header.drawHeight = 70
+        header.drawWidth = 100
+        header.hAlign = 'RIGHT'
+        w , h = header.wrap(doc.width , doc.topMargin)
+        header.drawOn(c , doc.leftMargin , 700)
+#FINALIZA EL DIBUJO DE CPI    
+
+#INICIA LOGO RSI
+#header
+        header = Image('rsilogo.png')
+        header.drawHeight = 50
+        header.drawWidth = 175
+        header.hAlign = 'LEFT'
+        w , h = header.wrap(doc.width , doc.topMargin)
+        header.drawOn(c , doc._rightMargin-175 , 720)
+#FINALIZA LOGO RSI
+
+# Footer
+        footer = Paragraph('FECHA Y HORA', styles['Normal'])
+        w, h = footer.wrap(doc.width, doc.bottomMargin)
+        footer.drawOn(c, doc.leftMargin, h)   
+
+#DIBUJA LA GRAFICA EL
+#graph
+        graph = Image(_el_filename)
+        graph.drawHeight = 275
+        graph.drawWidth = 395
+        graph.hAlign = 'CENTER'
+        #w , h = graph.wrap(doc.width , doc.topMargin)
+        graph.drawOn(c , PAGE_WIDTH/2-140 ,PAGE_HEIGHT/2-10)
+#FINALIZA DIBUJO DE GRAFICA
+
+#DIBUJA LA TABLA 
+        EL.wrapOn(c, doc.width , doc.topMargin)
+        EL.drawOn(c, PAGE_WIDTH/2-70, PAGE_HEIGHT/2-200)
+#FINALIZA DIBUJO 
+
+#PARA MOSTRAR LA GANANCIA:
+        if envelope == 0:
+            text = "CALCULATED GAIN: " + str(round(CALCULATED_GAIN,2))
+            para = Paragraph(text, styles["Heading3"])
+            
+            w, h = para.wrap(doc.width, doc.bottomMargin)
+            para.drawOn(c, doc.width/2-50, PAGE_HEIGHT/2-240)
+            
+            if self.antena_gain_real < CALCULATED_GAIN or CALCULATED_GAIN == self.antena_gain_real:
+                text_2 = "GAIN PASS "
+                para2 = Paragraph(text_2, styles["Heading3"])
+                w, h = para2.wrap(doc.width, doc.bottomMargin)
+                para2.drawOn(c, doc.width/2-50, PAGE_HEIGHT/2-260)
+#FINALIZA LA CREACION DEL REPORTE
+
         s = getSampleStyleSheet()
         elements = []
         p = ParagraphStyle('yourtitle',alignment = 1,parent=s['Heading1'])
@@ -459,7 +579,7 @@ class analyzer_generator():
 
                 
         doc.build(elements)
-        #c.save()
+        c.save()
         
     def gain_calculation(self):
         '''
