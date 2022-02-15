@@ -30,7 +30,7 @@ from Analyzer import analyzer_generator #libreria swarm para la deteccion de la 
 from PySide2.QtCore import Qt
 from PySide2.QtWidgets import QLabel, QApplication, QWidget, QPushButton,QLineEdit, QCheckBox, QVBoxLayout
 import sys
-from PySide2.QtGui import QImage, QPixmap
+#from PySide2.QtGui import QImage, QPixmap
 
 
 
