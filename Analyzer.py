@@ -40,8 +40,8 @@ from reportlab.lib.pagesizes import A4, inch, landscape
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Image, PageBreak
 
 from reportlab.lib.styles import getSampleStyleSheet,ParagraphStyle
-from reportlab.lib import utils
-from reportlab.lib.pagesizes import letter
+#from reportlab.lib import utils
+#from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 #from PIL import Image
 
