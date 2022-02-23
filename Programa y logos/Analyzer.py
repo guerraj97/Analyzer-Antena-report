@@ -27,7 +27,9 @@ Version 0.0.0 - Inicio del archivo.
 
 18/09/2021 Version 0.5.1 - Arreglos a la tabla de datos para una mejor visualizacion. 
 
-29/11/2021 Version 0.5.2 - Arreglos al codigo para mostrar si paso la ganancia.  
+29/11/2021 Version 0.5.2 - Arreglos al codigo para mostrar si paso la ganancia. 
+
+01/02/2022 Version 0.6.0 - Se agrega fecha y hora al reporte PDF.  
 
 @author: joseguerra
 """
@@ -469,7 +471,19 @@ class analyzer_generator():
 #FINALIZA LOGO RSI
 
 # Footer
-        footer = Paragraph('FECHA Y HORA', styles['Normal'])
+        now = datetime.now()
+        hour = str(now.hour)
+        minutes = str(now.minute)
+        HORA = hour +":"+ minutes
+        
+        day = str(now.day)
+        month = str(now.month)
+        year = str(now.year)
+        DATE = month +"/"+day+"/"+year
+        
+        info = DATE + " " + HORA
+        
+        footer = Paragraph(info, styles['Normal'])
         w, h = footer.wrap(doc.width, doc.bottomMargin)
         footer.drawOn(c, doc.leftMargin, h)   
 
@@ -513,9 +527,21 @@ class analyzer_generator():
 #FINALIZA LOGO RSI
 
 # Footer
-        footer = Paragraph('FECHA Y HORA', styles['Normal'])
+        now = datetime.now()
+        hour = str(now.hour)
+        minutes = str(now.minute)
+        HORA = hour +":"+ minutes
+        
+        day = str(now.day)
+        month = str(now.month)
+        year = str(now.year)
+        DATE = month +"/"+day+"/"+year
+        
+        info = DATE + " " + HORA
+        
+        footer = Paragraph(info, styles['Normal'])
         w, h = footer.wrap(doc.width, doc.bottomMargin)
-        footer.drawOn(c, doc.leftMargin, h)   
+        footer.drawOn(c, doc.leftMargin, h)     
 
 #DIBUJA LA GRAFICA EL
 #graph
